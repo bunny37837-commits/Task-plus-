@@ -1,7 +1,7 @@
 package com.taskpulse.app.overlay
 
 import android.app.Notification
-import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -16,127 +16,191 @@ import androidx.compose.runtime.Recomposer
 import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.*
-import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import com.taskpulse.app.MainActivity
 import com.taskpulse.app.R
 import com.taskpulse.app.TaskPulseApp
+import com.taskpulse.app.domain.usecase.CompleteTaskUseCase
+import com.taskpulse.app.domain.usecase.SnoozeTaskUseCase
+import com.taskpulse.app.worker.ExactAlarmScheduler
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import javax.inject.Inject
+
 @AndroidEntryPoint
 class OverlayService : Service() {
-    @Inject
-    lateinit var completeTaskUseCase: com.taskpulse.app.domain.usecase.CompleteTaskUseCase
-    lateinit var snoozeTaskUseCase: com.taskpulse.app.domain.usecase.SnoozeTaskUseCase
-    lateinit var alarmScheduler: com.taskpulse.app.worker.ExactAlarmScheduler
+
+    @Inject lateinit var completeTaskUseCase: CompleteTaskUseCase
+    @Inject lateinit var snoozeTaskUseCase: SnoozeTaskUseCase
+    @Inject lateinit var alarmScheduler: ExactAlarmScheduler
+
     private lateinit var windowManager: WindowManager
     private var overlayView: ComposeView? = null
     private var autoDismissJob: Job? = null
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
     override fun onBind(intent: Intent?) = null
+
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
     }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val taskId = intent?.getLongExtra("TASK_ID", -1L) ?: return START_NOT_STICKY
-        if (taskId == -1L) return START_NOT_STICKY
-        val taskTitle = intent.getStringExtra("TASK_TITLE") ?: "Reminder"
-        val taskDesc = intent.getStringExtra("TASK_DESC") ?: ""
-        val showOverlay = intent.getBooleanExtra("TASK_SHOW_OVERLAY", true)
-        val vibrate = intent.getBooleanExtra("TASK_VIBRATE", true)
-        startForeground(NOTIFICATION_ID, buildForegroundNotification(taskTitle, taskId))
-        if (vibrate) vibrate()
-        playSound()
-        if (showOverlay && canDrawOverlays()) {
-            showOverlayWindow(taskId, taskTitle, taskDesc)
-        }
-        // Auto-dismiss after 60s → mark missed
+        val taskId   = intent?.getLongExtra("TASK_ID", -1L) ?: -1L
+        val title    = intent?.getStringExtra("TASK_TITLE") ?: "Reminder"
+        val desc     = intent?.getStringExtra("TASK_DESC") ?: ""
+        val showOverlay = intent?.getBooleanExtra("TASK_SHOW_OVERLAY", true) ?: true
+        val vibrate  = intent?.getBooleanExtra("TASK_VIBRATE", true) ?: true
+
+        startForegroundWithNotification(taskId, title, desc)
+
+        if (vibrate) doVibrate()
+        playRingtone()
+
+        if (showOverlay) showOverlay(taskId, title, desc)
+
+        // Auto dismiss after 60 seconds
         autoDismissJob = serviceScope.launch {
             delay(60_000)
             dismiss()
+        }
+
         return START_NOT_STICKY
-    private fun canDrawOverlays(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            android.provider.Settings.canDrawOverlays(this)
-        } else true
-    private fun showOverlayWindow(taskId: Long, taskTitle: String, taskDesc: String) {
+    }
+
+    private fun startForegroundWithNotification(taskId: Long, title: String, desc: String) {
+        val tapIntent = PendingIntent.getActivity(
+            this, 0,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notif = Notification.Builder(this, TaskPulseApp.CHANNEL_REMINDER)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title)
+            .setContentText(desc.ifBlank { "Tap to open" })
+            .setContentIntent(tapIntent)
+            .setOngoing(true)
+            .build()
+        startForeground(taskId.toInt().coerceAtLeast(1), notif)
+    }
+
+    private fun doVibrate() {
+        val pattern = longArrayOf(0, 700, 300, 700, 300, 700)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vm.defaultVibrator.vibrate(
+                VibrationEffect.createWaveform(pattern, -1)
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            val vm = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vm.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                vm.vibrate(pattern, -1)
+            }
+        }
+    }
+
+    private fun playRingtone() {
+        try {
+            val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val ringtone = RingtoneManager.getRingtone(this, uri)
+            ringtone?.let {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    it.isLooping = false
+                }
+                it.play()
+            }
+        } catch (e: Exception) { /* silent fail */ }
+    }
+
+    private fun showOverlay(taskId: Long, title: String, desc: String) {
+        if (overlayView != null) return
+
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
-                @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                @Suppress("DEPRECATION")
+                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                     WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
                     WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
-            PixelFormat.TRANSLUCENT,
-        )
-        // Create a lifecycle-aware owner for Compose
-        val lifecycleOwner = OverlayLifecycleOwner()
-        lifecycleOwner.start()
-        overlayView = ComposeView(this).also { composeView ->
-            composeView.setViewTreeLifecycleOwner(lifecycleOwner)
-            composeView.setViewTreeViewModelStoreOwner(lifecycleOwner)
-            composeView.setViewTreeSavedStateRegistryOwner(lifecycleOwner)
-            composeView.setContent {
-                com.taskpulse.app.presentation.ui.theme.TaskPulseTheme {
-                    OverlayScreen(
-                        taskTitle = taskTitle,
-                        taskDesc = taskDesc,
-                        onComplete = {
-                            serviceScope.launch {
-                                completeTaskUseCase(taskId)
-                                alarmScheduler.cancel(taskId)
-                            }
-                            dismiss()
-                        },
-                        onSnooze = { minutes ->
-                                snoozeTaskUseCase(taskId, minutes)
-                                // Reschedule with new time
-                    )
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = android.view.Gravity.TOP
+        }
+
+        val view = ComposeView(this).apply {
+            // Lifecycle setup for Compose in Service
+            val lifecycleOwner = object : SavedStateRegistryOwner {
+                val lc = LifecycleRegistry(this)
+                val ctrl = SavedStateRegistryController.create(this)
+                override val lifecycle: Lifecycle get() = lc
+                override val savedStateRegistry get() = ctrl.savedStateRegistry
+                init {
+                    ctrl.performAttach()
+                    ctrl.performRestore(null)
+                    lc.currentState = Lifecycle.State.RESUMED
                 }
             }
-        try {
-            windowManager.addView(overlayView, params)
-        } catch (e: Exception) {
-            e.printStackTrace()
-    private fun buildForegroundNotification(title: String, taskId: Long): Notification {
-        val tapIntent = Intent(this, MainActivity::class.java)
-        val tapPi = PendingIntent.getActivity(this, 0, tapIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        return Notification.Builder(this, TaskPulseApp.CHANNEL_OVERLAY)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle("TaskPulse")
-            .setContentText("Reminder: $title")
-            .setContentIntent(tapPi)
-            .build()
-private fun vibrate() {
-    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        vm.defaultVibrator
-    } else {
-        @Suppress("DEPRECATION")
-        getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-    val pattern = longArrayOf(0,700,300,700,300,700)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        vibrator.vibrate(VibrationEffect.createWaveform(pattern,-1))
-        vibrator.vibrate(pattern,-1)
+            setViewTreeLifecycleOwner(lifecycleOwner)
+            setViewTreeSavedStateRegistryOwner(lifecycleOwner)
+            setViewTreeViewModelStoreOwner(object : ViewModelStoreOwner {
+                override val viewModelStore = ViewModelStore()
+            })
+
+            val coroutineContext = AndroidUiDispatcher.CurrentThread
+            val recomposer = Recomposer(coroutineContext)
+            setParentCompositionContext(recomposer)
+            serviceScope.launch(coroutineContext) { recomposer.runRecomposeAndApplyChanges() }
+
+            setContent {
+                OverlayScreen(
+                    taskTitle = title,
+                    taskDesc = desc,
+                    onSnooze = { minutes ->
+                        serviceScope.launch {
+                            snoozeTaskUseCase(taskId, minutes)
+                        }
+                        dismiss()
+                    },
+                    onComplete = {
+                        serviceScope.launch {
+                            completeTaskUseCase(taskId)
+                        }
+                        dismiss()
+                    }
+                )
+            }
+        }
+
+        overlayView = view
+        try { windowManager.addView(view, params) } catch (e: Exception) { dismiss() }
+    }
+
+    private fun dismiss() {
+        autoDismissJob?.cancel()
+        overlayView?.let {
+            try { windowManager.removeView(it) } catch (e: Exception) {}
+        }
+        overlayView = null
+        stopSelf()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
+        overlayView?.let {
+            try { windowManager.removeView(it) } catch (e: Exception) {}
+        }
+    }
 }
-// Minimal lifecycle owner for ComposeView outside Activity
-class OverlayLifecycleOwner : LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
-    private val lifecycleRegistry = LifecycleRegistry(this)
-    private val savedStateRegistryController = SavedStateRegistryController.create(this)
-    private val store = ViewModelStore()
-    override val lifecycle: Lifecycle get() = lifecycleRegistry
-    override val viewModelStore: ViewModelStore get() = store
-    override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
-    fun start() {
-        savedStateRegistryController.performRestore(null)
-        lifecycleRegistry.currentState = Lifecycle.State.STARTED
-    fun stop() {
-        lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
-        store.clear()

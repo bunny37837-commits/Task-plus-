@@ -46,6 +46,7 @@
         <!-- Foreground Service for overlay -->
         <service
             android:name=".overlay.OverlayService"
+            android:stopWithTask="false"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
