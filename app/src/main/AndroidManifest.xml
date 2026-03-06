@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permissions -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
@@ -12,6 +11,8 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
 
     <application
         android:name=".TaskPulseApp"
@@ -33,7 +34,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Overlay Activity for reminders -->
         <activity
             android:name=".overlay.OverlayActivity"
             android:exported="false"
@@ -43,18 +43,16 @@
             android:launchMode="singleInstance"
             android:excludeFromRecents="true"/>
 
-        <!-- Foreground Service for overlay -->
         <service
             android:name=".overlay.OverlayService"
-            android:stopWithTask="false"
             android:exported="false"
+            android:stopWithTask="false"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="alarm"/>
         </service>
 
-        <!-- Alarm BroadcastReceiver -->
         <receiver
             android:name=".worker.TaskAlarmReceiver"
             android:exported="false">
@@ -63,17 +61,16 @@
             </intent-filter>
         </receiver>
 
-        <!-- Boot Receiver -->
         <receiver
             android:name=".worker.BootReceiver"
             android:exported="true">
-            <intent-filter>
+            <intent-filter android:priority="999">
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="com.miui.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
         </receiver>
 
-        <!-- WorkManager initializer -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

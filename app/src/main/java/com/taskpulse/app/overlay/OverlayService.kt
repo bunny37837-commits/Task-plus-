@@ -8,9 +8,10 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
-import android.media.AudioAttributes
+import android.media.Ringtone
 import android.media.RingtoneManager
 import android.os.*
+import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.runtime.Recomposer
 import androidx.compose.ui.platform.AndroidUiDispatcher
@@ -38,6 +39,7 @@ class OverlayService : Service() {
     private lateinit var windowManager: WindowManager
     private var overlayView: ComposeView? = null
     private var autoDismissJob: Job? = null
+    private var ringtone: Ringtone? = null
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     override fun onBind(intent: Intent?) = null
@@ -45,14 +47,15 @@ class OverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        ensureNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val taskId   = intent?.getLongExtra("TASK_ID", -1L) ?: -1L
-        val title    = intent?.getStringExtra("TASK_TITLE") ?: "Reminder"
-        val desc     = intent?.getStringExtra("TASK_DESC") ?: ""
+        val taskId      = intent?.getLongExtra("TASK_ID", -1L) ?: -1L
+        val title       = intent?.getStringExtra("TASK_TITLE") ?: "Reminder"
+        val desc        = intent?.getStringExtra("TASK_DESC") ?: ""
         val showOverlay = intent?.getBooleanExtra("TASK_SHOW_OVERLAY", true) ?: true
-        val vibrate  = intent?.getBooleanExtra("TASK_VIBRATE", true) ?: true
+        val vibrate     = intent?.getBooleanExtra("TASK_VIBRATE", true) ?: true
 
         startForegroundWithNotification(taskId, title, desc)
 
@@ -61,13 +64,31 @@ class OverlayService : Service() {
 
         if (showOverlay) showOverlay(taskId, title, desc)
 
-        // Auto dismiss after 60 seconds
+        // Auto-dismiss after 2 minutes
         autoDismissJob = serviceScope.launch {
-            delay(60_000)
+            delay(120_000)
             dismiss()
         }
 
         return START_NOT_STICKY
+    }
+
+    private fun ensureNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (nm.getNotificationChannel(TaskPulseApp.CHANNEL_REMINDER) == null) {
+                val channel = NotificationChannel(
+                    TaskPulseApp.CHANNEL_REMINDER,
+                    "Task Reminders",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Task reminder alerts"
+                    enableVibration(true)
+                    setShowBadge(true)
+                }
+                nm.createNotificationChannel(channel)
+            }
+        }
     }
 
     private fun startForegroundWithNotification(taskId: Long, title: String, desc: String) {
@@ -88,35 +109,41 @@ class OverlayService : Service() {
 
     private fun doVibrate() {
         val pattern = longArrayOf(0, 700, 300, 700, 300, 700)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-            vm.defaultVibrator.vibrate(
-                VibrationEffect.createWaveform(pattern, -1)
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            val vm = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vm.vibrate(VibrationEffect.createWaveform(pattern, -1))
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vm.defaultVibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
             } else {
                 @Suppress("DEPRECATION")
-                vm.vibrate(pattern, -1)
+                val vm = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vm.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vm.vibrate(pattern, -1)
+                }
             }
-        }
+        } catch (e: Exception) { /* silent */ }
     }
 
     private fun playRingtone() {
         try {
             val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                 ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            val ringtone = RingtoneManager.getRingtone(this, uri)
-            ringtone?.let {
+            ringtone = RingtoneManager.getRingtone(this, uri)?.also {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     it.isLooping = false
                 }
                 it.play()
             }
-        } catch (e: Exception) { /* silent fail */ }
+        } catch (e: Exception) { /* silent */ }
+    }
+
+    private fun stopRingtone() {
+        try {
+            ringtone?.stop()
+            ringtone = null
+        } catch (e: Exception) { /* silent */ }
     }
 
     private fun showOverlay(taskId: Long, title: String, desc: String) {
@@ -130,19 +157,19 @@ class OverlayService : Service() {
             else
                 @Suppress("DEPRECATION")
                 WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                     WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD,
             PixelFormat.TRANSLUCENT
         ).apply {
-            gravity = android.view.Gravity.TOP
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            y = 80 // slight margin from top like Truecaller
         }
 
         val view = ComposeView(this).apply {
-            // Lifecycle setup for Compose in Service
             val lifecycleOwner = object : SavedStateRegistryOwner {
-                val lc = LifecycleRegistry(this)
+                val lc   = LifecycleRegistry(this)
                 val ctrl = SavedStateRegistryController.create(this)
                 override val lifecycle: Lifecycle get() = lc
                 override val savedStateRegistry get() = ctrl.savedStateRegistry
@@ -161,22 +188,20 @@ class OverlayService : Service() {
             val coroutineContext = AndroidUiDispatcher.CurrentThread
             val recomposer = Recomposer(coroutineContext)
             setParentCompositionContext(recomposer)
-            serviceScope.launch(coroutineContext) { recomposer.runRecomposeAndApplyChanges() }
+            serviceScope.launch(coroutineContext) {
+                recomposer.runRecomposeAndApplyChanges()
+            }
 
             setContent {
                 OverlayScreen(
                     taskTitle = title,
-                    taskDesc = desc,
-                    onSnooze = { minutes ->
-                        serviceScope.launch {
-                            snoozeTaskUseCase(taskId, minutes)
-                        }
+                    taskDesc  = desc,
+                    onSnooze  = { minutes ->
+                        serviceScope.launch { snoozeTaskUseCase(taskId, minutes) }
                         dismiss()
                     },
                     onComplete = {
-                        serviceScope.launch {
-                            completeTaskUseCase(taskId)
-                        }
+                        serviceScope.launch { completeTaskUseCase(taskId) }
                         dismiss()
                     }
                 )
@@ -184,13 +209,18 @@ class OverlayService : Service() {
         }
 
         overlayView = view
-        try { windowManager.addView(view, params) } catch (e: Exception) { dismiss() }
+        try {
+            windowManager.addView(view, params)
+        } catch (e: Exception) {
+            dismiss()
+        }
     }
 
     private fun dismiss() {
         autoDismissJob?.cancel()
+        stopRingtone()
         overlayView?.let {
-            try { windowManager.removeView(it) } catch (e: Exception) {}
+            try { windowManager.removeView(it) } catch (_: Exception) {}
         }
         overlayView = null
         stopSelf()
@@ -198,9 +228,10 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopRingtone()
         serviceScope.cancel()
         overlayView?.let {
-            try { windowManager.removeView(it) } catch (e: Exception) {}
+            try { windowManager.removeView(it) } catch (_: Exception) {}
         }
     }
 }
