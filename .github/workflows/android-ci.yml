@@ -20,13 +20,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle (Gold config)
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
         with:
-          add-job-summary: 'on-failure'          # Official rich summary only on fail
+          add-job-summary: on-failure
           build-scan-publish: true
-          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-          build-scan-terms-of-use-agree: 'yes'
+          build-scan-terms-of-use-url: https://gradle.com/terms-of-service
+          build-scan-terms-of-use-agree: "yes"
 
       - name: Make gradlew executable
         run: chmod +x gradlew
@@ -40,21 +40,29 @@ jobs:
 
       - name: Summarize Kotlin failure
         if: failure() && steps.compile_kotlin.outcome == 'failure'
+        shell: bash
         run: |
-          echo "## ❌ Compile Kotlin failed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### First likely error lines (with context)" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          grep -B3 -A8 -m 10 -E "e: |ERROR:|Execution failed for task|Unresolved reference|Type mismatch|No value passed|Expecting" compile-kotlin.log >> $GITHUB_STEP_SUMMARY || echo "No direct Kotlin error line matched." >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> $GITHUB_STEP_SUMMARY
-          # Fixed & improved GitHub Annotations (PR Files tab mein red errors)
+          echo "## ❌ Compile Kotlin failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### First likely error lines (with context)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          grep -B3 -A8 -m 10 -E "e: |ERROR:|Execution failed for task|Unresolved reference|Type mismatch|No value passed|Expecting" compile-kotlin.log >> "$GITHUB_STEP_SUMMARY" || echo "No direct Kotlin error line matched." >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> "$GITHUB_STEP_SUMMARY"
+
           while IFS= read -r line; do
-            if [[ $line =\~ ^e:\ (/[^:]+):([0-9]+): ]]; then
+            if [[ "$line" =~ ^e:\ ([^:]+):([0-9]+):([0-9]+):\ (.*)$ ]]; then
               file="${BASH_REMATCH[1]}"
               ln="${BASH_REMATCH[2]}"
-              echo "::error file=$file,line=$ln::$line"
+              col="${BASH_REMATCH[3]}"
+              msg="${BASH_REMATCH[4]}"
+              echo "::error file=$file,line=$ln,col=$col::$msg"
+            elif [[ "$line" =~ ^e:\ ([^:]+):([0-9]+):\ (.*)$ ]]; then
+              file="${BASH_REMATCH[1]}"
+              ln="${BASH_REMATCH[2]}"
+              msg="${BASH_REMATCH[3]}"
+              echo "::error file=$file,line=$ln::$msg"
             fi
           done < compile-kotlin.log
 
@@ -65,15 +73,16 @@ jobs:
 
       - name: Summarize resource failure
         if: failure() && steps.process_resources.outcome == 'failure'
+        shell: bash
         run: |
-          echo "## ❌ Process Resources failed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### First likely error lines (with context)" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          grep -B3 -A8 -m 10 -E "ERROR:|AAPT:|Execution failed for task|Android resource linking failed|Manifest merger failed" process-resources.log >> $GITHUB_STEP_SUMMARY || echo "No direct resource error line matched." >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> $GITHUB_STEP_SUMMARY
+          echo "## ❌ Process Resources failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### First likely error lines (with context)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          grep -B3 -A8 -m 10 -E "ERROR:|AAPT:|Execution failed for task|Android resource linking failed|Manifest merger failed" process-resources.log >> "$GITHUB_STEP_SUMMARY" || echo "No direct resource error line matched." >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Lint project
         id: lint_project
@@ -82,15 +91,16 @@ jobs:
 
       - name: Summarize lint failure
         if: failure() && steps.lint_project.outcome == 'failure'
+        shell: bash
         run: |
-          echo "## ❌ Lint failed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### First likely error lines (with context)" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          grep -B3 -A8 -m 10 -E "Error:|ERROR:|Execution failed for task|Lint found errors" lint.log >> $GITHUB_STEP_SUMMARY || echo "No direct lint error line matched." >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> $GITHUB_STEP_SUMMARY
+          echo "## ❌ Lint failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### First likely error lines (with context)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          grep -B3 -A8 -m 10 -E "Error:|ERROR:|Execution failed for task|Lint found errors" lint.log >> "$GITHUB_STEP_SUMMARY" || echo "No direct lint error line matched." >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload verify logs on failure
         if: failure()
@@ -116,49 +126,51 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle (Gold config)
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
         with:
-          add-job-summary: 'on-failure'
+          add-job-summary: on-failure
           build-scan-publish: true
-          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-          build-scan-terms-of-use-agree: 'yes'
+          build-scan-terms-of-use-url: https://gradle.com/terms-of-service
+          build-scan-terms-of-use-agree: "yes"
 
       - name: Make gradlew executable
         run: chmod +x gradlew
 
       - name: Build Debug APK
         id: build_apk
-        run: ./gradlew assembleDebug --no-daemon --stacktrace --info --warning-mode all --scan 2>&1 | tee build-apk.log   # --scan only here (selective)
+        run: ./gradlew assembleDebug --no-daemon --stacktrace --info --warning-mode all --scan 2>&1 | tee build-apk.log
 
       - name: Summarize APK build failure
         if: failure() && steps.build_apk.outcome == 'failure'
+        shell: bash
         run: |
-          echo "## ❌ Build Debug APK failed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### First likely error lines (with context)" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          grep -B3 -A8 -m 10 -E "e: |ERROR:|Execution failed for task|AAPT:|Unresolved reference|Type mismatch|Android resource linking failed" build-apk.log >> $GITHUB_STEP_SUMMARY || echo "No direct APK build error line matched." >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> $GITHUB_STEP_SUMMARY
+          echo "## ❌ Build Debug APK failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### First likely error lines (with context)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          grep -B3 -A8 -m 10 -E "e: |ERROR:|Execution failed for task|AAPT:|Unresolved reference|Type mismatch|Android resource linking failed" build-apk.log >> "$GITHUB_STEP_SUMMARY" || echo "No direct APK build error line matched." >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build Release Bundle
         id: build_aab
         if: success()
-        run: ./gradlew bundleRelease --no-daemon --stacktrace --info --warning-mode all --scan 2>&1 | tee build-aab.log   # --scan only here
+        run: ./gradlew bundleRelease --no-daemon --stacktrace --info --warning-mode all --scan 2>&1 | tee build-aab.log
 
       - name: Summarize AAB build failure
         if: failure() && steps.build_aab.outcome == 'failure'
+        shell: bash
         run: |
-          echo "## ❌ Build Release Bundle failed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### First likely error lines (with context)" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          grep -B3 -A8 -m 10 -E "e: |ERROR:|Execution failed for task|AAPT:|Unresolved reference|Type mismatch|Android resource linking failed" build-aab.log >> $GITHUB_STEP_SUMMARY || echo "No direct AAB build error line matched." >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> $GITHUB_STEP_SUMMARY
+          echo "## ❌ Build Release Bundle failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### First likely error lines (with context)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          grep -B3 -A8 -m 10 -E "e: |ERROR:|Execution failed for task|AAPT:|Unresolved reference|Type mismatch|Android resource linking failed" build-aab.log >> "$GITHUB_STEP_SUMMARY" || echo "No direct AAB build error line matched." >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload APK
         if: success()
