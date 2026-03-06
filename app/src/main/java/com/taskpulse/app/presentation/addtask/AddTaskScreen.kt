@@ -236,9 +236,29 @@ fun AddTaskScreen(
             }
 
             // Error
-            state.error?.let {
-                Text(it, color = Danger, fontSize = 13.sp)
-            }
+            state.error?.let { message ->
+                  Surface(
+                      shape = RoundedCornerShape(12.dp),
+                      color = Danger.copy(alpha = 0.12f),
+                      border = BorderStroke(1.dp, Danger),
+                      modifier = Modifier.fillMaxWidth()
+                  ) {
+                      Column(modifier = Modifier.padding(14.dp)) {
+                          Text(
+                              text = "Reminder setup incomplete",
+                              color = Danger,
+                              fontWeight = FontWeight.SemiBold,
+                              fontSize = 14.sp
+                          )
+                          Spacer(Modifier.height(6.dp))
+                          Text(
+                              text = message,
+                              color = TextPrimary,
+                              fontSize = 13.sp
+                          )
+                      }
+                  }
+              }
 
             // Save Button
             GradientButton(
