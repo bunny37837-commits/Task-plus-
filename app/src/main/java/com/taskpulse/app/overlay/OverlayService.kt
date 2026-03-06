@@ -133,9 +133,8 @@ class OverlayService : Service() {
             composeView.setContent {
                 com.taskpulse.app.presentation.ui.theme.TaskPulseTheme {
                     OverlayScreen(
-                        taskId = taskId,
                         taskTitle = taskTitle,
-                        taskDescription = taskDesc,
+                        taskDesc = taskDesc,
                         onComplete = {
                             serviceScope.launch {
                                 completeTaskUseCase(taskId)
@@ -150,7 +149,7 @@ class OverlayService : Service() {
                             }
                             dismiss()
                         },
-                        onDismiss = { dismiss() },
+                        onClose = { dismiss() },
                     )
                 }
             }
