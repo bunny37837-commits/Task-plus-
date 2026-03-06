@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TaskPulse</string>
+    <string name="notification_channel_name">Task Reminders</string>
+    <string name="notification_channel_desc">Notifications for scheduled task reminders</string>
+    <string name="overlay_service_notification">TaskPulse reminder active</string>
+</resources>
