@@ -18,13 +18,12 @@ class TaskAlarmReceiver : BroadcastReceiver() {
 
         val showOverlay = intent.getBooleanExtra("TASK_SHOW_OVERLAY", true)
 
-        val serviceIntent = Intent(context, OverlayService::class.java).apply {
-            putExtra("TASK_ID", taskId)
-            putExtra("TASK_TITLE", intent.getStringExtra("TASK_TITLE"))
-            putExtra("TASK_DESC", intent.getStringExtra("TASK_DESC"))
-            putExtra("TASK_SHOW_OVERLAY", showOverlay)
-            putExtra("TASK_VIBRATE", intent.getBooleanExtra("TASK_VIBRATE", true))
-        }
+        val serviceIntent = Intent(context, OverlayService::class.java)
+            .putExtra("TASK_ID", taskId)
+            .putExtra("TASK_TITLE", intent.getStringExtra("TASK_TITLE"))
+            .putExtra("TASK_DESC", intent.getStringExtra("TASK_DESC"))
+            .putExtra("TASK_SHOW_OVERLAY", showOverlay)
+            .putExtra("TASK_VIBRATE", intent.getBooleanExtra("TASK_VIBRATE", true))
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(serviceIntent)
