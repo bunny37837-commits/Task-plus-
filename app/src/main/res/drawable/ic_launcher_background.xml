@@ -4,5 +4,5 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <rect android:width="108" android:height="108" android:fillColor="#0D0D0F"/>
+    <rect android:width="108dp" android:height="108dp" android:fillColor="#0D0D0F"/>
 </vector>
