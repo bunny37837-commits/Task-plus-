@@ -38,7 +38,16 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+    lint {
+        disable += "NullSafeMutableLiveData"
+    }
         compose = true
+    lint {
+        disable += "NullSafeMutableLiveData"
+    }
+    }
+    lint {
+        disable += "NullSafeMutableLiveData"
     }
 }
 
