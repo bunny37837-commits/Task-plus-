@@ -32,11 +32,15 @@ jobs:
         run: chmod +x gradlew
 
       - name: Verify Gradle wrapper
-        run: ./gradlew wrapper --no-daemon --stacktrace 2>&1 | tee verify-wrapper.log
+        run: |
+          set -o pipefail
+          ./gradlew wrapper --no-daemon --stacktrace 2>&1 | tee verify-wrapper.log
 
       - name: Compile Kotlin
         id: compile_kotlin
-        run: ./gradlew compileDebugKotlin --no-daemon --stacktrace --info --warning-mode all 2>&1 | tee compile-kotlin.log
+        run: |
+          set -o pipefail
+          ./gradlew compileDebugKotlin --no-daemon --stacktrace --info --warning-mode all 2>&1 | tee compile-kotlin.log
 
       - name: Summarize Kotlin failure
         if: failure() && steps.compile_kotlin.outcome == 'failure'
@@ -69,7 +73,9 @@ jobs:
       - name: Process resources
         id: process_resources
         if: success()
-        run: ./gradlew processDebugResources --no-daemon --stacktrace --info --warning-mode all 2>&1 | tee process-resources.log
+        run: |
+          set -o pipefail
+          ./gradlew processDebugResources --no-daemon --stacktrace --info --warning-mode all 2>&1 | tee process-resources.log
 
       - name: Summarize resource failure
         if: failure() && steps.process_resources.outcome == 'failure'
@@ -87,7 +93,9 @@ jobs:
       - name: Lint project
         id: lint_project
         if: success()
-        run: ./gradlew lintDebug --no-daemon --stacktrace --info --warning-mode all 2>&1 | tee lint.log
+        run: |
+          set -o pipefail
+          ./gradlew lintDebug --no-daemon --stacktrace --info --warning-mode all 2>&1 | tee lint.log
 
       - name: Summarize lint failure
         if: failure() && steps.lint_project.outcome == 'failure'
@@ -139,7 +147,9 @@ jobs:
 
       - name: Build Debug APK
         id: build_apk
-        run: ./gradlew assembleDebug --no-daemon --stacktrace --info --warning-mode all --scan 2>&1 | tee build-apk.log
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug --no-daemon --stacktrace --info --warning-mode all --scan 2>&1 | tee build-apk.log
 
       - name: Summarize APK build failure
         if: failure() && steps.build_apk.outcome == 'failure'
@@ -157,7 +167,9 @@ jobs:
       - name: Build Release Bundle
         id: build_aab
         if: success()
-        run: ./gradlew bundleRelease --no-daemon --stacktrace --info --warning-mode all --scan 2>&1 | tee build-aab.log
+        run: |
+          set -o pipefail
+          ./gradlew bundleRelease --no-daemon --stacktrace --info --warning-mode all --scan 2>&1 | tee build-aab.log
 
       - name: Summarize AAB build failure
         if: failure() && steps.build_aab.outcome == 'failure'
