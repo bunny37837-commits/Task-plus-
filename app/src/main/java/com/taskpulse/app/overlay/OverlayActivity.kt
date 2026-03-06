@@ -4,23 +4,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.taskpulse.app.presentation.ui.theme.TaskPulseTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class OverlayActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val taskId = intent.getLongExtra("TASK_ID", -1L)
-        val taskTitle = intent.getStringExtra("TASK_TITLE") ?: "Reminder"
-        val taskDescription = intent.getStringExtra("TASK_DESC") ?: ""
-
+        val title = intent.getStringExtra("TASK_TITLE") ?: "Reminder"
+        val desc = intent.getStringExtra("TASK_DESC") ?: ""
         setContent {
             TaskPulseTheme {
                 OverlayScreen(
-                    taskId = taskId,
-                    taskTitle = taskTitle,
-                    taskDescription = taskDescription,
-                    onComplete = { finish() },
+                    taskTitle = title,
+                    taskDesc = desc,
                     onSnooze = { finish() },
-                    onDismiss = { finish() }
+                    onComplete = { finish() },
                 )
             }
         }
