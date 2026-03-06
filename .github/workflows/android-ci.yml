@@ -24,8 +24,14 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      - name: Compile Kotlin
+        run: ./gradlew compileDebugKotlin --no-daemon --stacktrace --info --warning-mode all
+
+      - name: Process Resources
+        run: ./gradlew processDebugResources --no-daemon --stacktrace --info --warning-mode all
+
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        run: ./gradlew assembleDebug --no-daemon --stacktrace --info --warning-mode all
 
       - name: Upload APK
         if: success()
