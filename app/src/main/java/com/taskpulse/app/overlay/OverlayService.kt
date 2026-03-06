@@ -149,7 +149,6 @@ class OverlayService : Service() {
                             }
                             dismiss()
                         },
-                        onClose = { dismiss() },
                     )
                 }
             }
