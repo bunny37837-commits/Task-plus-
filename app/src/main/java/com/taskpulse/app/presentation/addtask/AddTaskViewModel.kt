@@ -18,8 +18,8 @@ data class AddTaskUiState(
     val description: String = "",
     val selectedCategory: Category? = null,
     val priority: Priority = Priority.MEDIUM,
-    val date: LocalDate = LocalDate.now().plusDays(1),
-    val time: LocalTime = LocalTime.of(9, 0),
+    val date: LocalDate = LocalDate.now(),
+    val time: LocalTime = LocalTime.now().plusMinutes(5),
     val recurrence: RecurrenceType = RecurrenceType.NONE,
     val vibrate: Boolean = true,
     val showOverlay: Boolean = true,
@@ -40,12 +40,10 @@ class AddTaskViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(AddTaskUiState())
     val state: StateFlow<AddTaskUiState> = _state.asStateFlow()
-
+    val uiState: StateFlow<AddTaskUiState> = state
     private var editingTaskId: Long? = null
 
-    init {
-        loadCategories()
-    }
+    init { loadCategories() }
 
     private fun loadCategories() = viewModelScope.launch {
         categoryRepository.getAllCategories().collect { cats ->
@@ -71,7 +69,7 @@ class AddTaskViewModel @Inject constructor(
         }
     }
 
-    fun setTitle(v: String) = _state.update { it.copy(title = v) }
+    fun setTitle(v: String) = _state.update { it.copy(title = v, error = null) }
     fun setDescription(v: String) = _state.update { it.copy(description = v) }
     fun setCategory(v: Category?) = _state.update { it.copy(selectedCategory = v) }
     fun setPriority(v: Priority) = _state.update { it.copy(priority = v) }
@@ -80,6 +78,7 @@ class AddTaskViewModel @Inject constructor(
     fun setRecurrence(v: RecurrenceType) = _state.update { it.copy(recurrence = v) }
     fun setVibrate(v: Boolean) = _state.update { it.copy(vibrate = v) }
     fun setShowOverlay(v: Boolean) = _state.update { it.copy(showOverlay = v) }
+    fun clearError() = _state.update { it.copy(error = null) }
 
     fun save() = viewModelScope.launch {
         val s = _state.value
@@ -87,37 +86,46 @@ class AddTaskViewModel @Inject constructor(
             _state.update { it.copy(error = "Title cannot be empty") }
             return@launch
         }
-        val dt = LocalDateTime.of(s.date, s.time)
-        if (dt.isBefore(LocalDateTime.now())) {
+        val scheduledDt = LocalDateTime.of(s.date, s.time)
+        if (scheduledDt.isBefore(LocalDateTime.now())) {
             _state.update { it.copy(error = "Please select a future date and time") }
             return@launch
         }
         _state.update { it.copy(isLoading = true) }
-        val task = Task(
-            id = editingTaskId ?: 0,
-            title = s.title.trim(),
-            description = s.description.trim(),
-            category = s.selectedCategory,
-            priority = s.priority,
-            scheduledDateTime = dt,
-            recurrence = s.recurrence,
-            vibrate = s.vibrate,
-            showOverlay = s.showOverlay,
-        )
-        if (editingTaskId != null) {
-            updateTaskUseCase(task)
-            alarmScheduler.cancel(task.id)
-        } else {
-            val newId = createTaskUseCase(task)
-            alarmScheduler.schedule(task.copy(id = newId))
-        }
-        if (editingTaskId == null) {
-            // alarm scheduled above with new id
-        } else {
-            alarmScheduler.schedule(task)
-        }
-        _state.update { it.copy(isLoading = false, saved = true) }
-    }
+        try {
+            val task = Task(
+                id = editingTaskId ?: 0L,
+                title = s.title.trim(),
+                description = s.description.trim(),
+                category = s.selectedCategory,
+                priority = s.priority,
+                scheduledDateTime = scheduledDt,
+                recurrence = s.recurrence,
+                vibrate = s.vibrate,
+                showOverlay = s.showOverlay,
+            )
+            val finalTask = if (editingTaskId != null) {
+                updateTaskUseCase(task)
+                alarmScheduler.cancel(editingTaskId!!)
+                task
+            } else {
+                val newId = createTaskUseCase(task)
+                task.copy(id = newId)
+            }
 
-    fun clearError() = _state.update { it.copy(error = null) }
+            if (alarmScheduler.hasExactAlarmPermission()) {
+                alarmScheduler.schedule(finalTask)
+                _state.update { it.copy(isLoading = false, saved = true) }
+            } else {
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Reminder ke liye → Settings → Apps → Special app access → Alarms & reminders ON karo"
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            _state.update { it.copy(isLoading = false, error = "Failed: ${e.message}") }
+        }
+    }
 }
