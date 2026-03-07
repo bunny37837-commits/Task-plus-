@@ -1,14 +1,15 @@
 package com.taskpulse.app.worker
 
-import android.app.Notification
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.PowerManager
-import android.util.Log
+import androidx.core.app.NotificationCompat
 import com.taskpulse.app.TaskPulseApp
-import com.taskpulse.app.overlay.OverlayActivity
+import com.taskpulse.app.alert.AlertActivity
 
 class TaskAlarmReceiver : BroadcastReceiver() {
 
@@ -21,8 +22,6 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         val title = intent.getStringExtra("TASK_TITLE") ?: "Reminder"
         val desc = intent.getStringExtra("TASK_DESC") ?: ""
 
-        Log.d("TaskAlarmReceiver", "Alarm fired for taskId=$taskId title=$title")
-
         val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         val wakeLock = pm.newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK,
@@ -31,34 +30,43 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         wakeLock.acquire(10_000L)
 
         try {
-            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val notif = Notification.Builder(context, TaskPulseApp.CHANNEL_REMINDERS)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .setContentTitle(title)
-                .setContentText(if (desc.isBlank()) "Task reminder" else desc)
-                .setPriority(Notification.PRIORITY_MAX)
-                .setAutoCancel(true)
-                .build()
-            nm.notify(taskId.toInt(), notif)
-
-            val popupIntent = Intent(context, OverlayActivity::class.java).apply {
+            val fullScreenIntent = Intent(context, AlertActivity::class.java).apply {
                 addFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
                 )
                 putExtra("TASK_ID", taskId)
                 putExtra("TASK_TITLE", title)
                 putExtra("TASK_DESC", desc)
-                putExtra("TASK_SHOW_OVERLAY", intent.getBooleanExtra("TASK_SHOW_OVERLAY", true))
-                putExtra("TASK_VIBRATE", intent.getBooleanExtra("TASK_VIBRATE", true))
             }
 
-            context.startActivity(popupIntent)
-            Log.d("TaskAlarmReceiver", "OverlayActivity launched for taskId=$taskId")
+            val fullScreenPendingIntent = PendingIntent.getActivity(
+                context,
+                taskId.toInt(),
+                fullScreenIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
 
-        } catch (e: Exception) {
-            Log.e("TaskAlarmReceiver", "Receiver failed", e)
+            val notification = NotificationCompat.Builder(context, TaskPulseApp.CHANNEL_REMINDERS)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setContentTitle(title)
+                .setContentText(if (desc.isBlank()) "Task reminder" else desc)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setAutoCancel(true)
+                .setOngoing(true)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
+                .setContentIntent(fullScreenPendingIntent)
+                .build()
+
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.notify(taskId.toInt(), notification)
+
+            // Extra launch attempt for OEMs that ignore fullScreenIntent
+            context.startActivity(fullScreenIntent)
+
         } finally {
             if (wakeLock.isHeld) wakeLock.release()
         }

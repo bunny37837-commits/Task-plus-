@@ -37,8 +37,8 @@
         <activity
             android:name=".overlay.OverlayActivity"
             android:exported="false"
-            android:showOnLockScreen="true"
-            android:turnScreenOn="true"
+            
+            
             android:excludeFromRecents="true"
             android:launchMode="singleInstance" />
 
@@ -75,6 +75,14 @@
                 android:name="androidx.work.WorkManagerInitializer"
                 android:value="androidx.startup" />
         </provider>
+
+    
+        <activity
+            android:name=".alert.AlertActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            
+             />
 
     </application>
 
