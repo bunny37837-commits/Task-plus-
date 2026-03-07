@@ -8,7 +8,7 @@ import android.content.Intent
 import android.os.PowerManager
 import android.util.Log
 import com.taskpulse.app.TaskPulseApp
-import com.taskpulse.app.overlay.OverlayService
+import com.taskpulse.app.overlay.OverlayActivity
 
 class TaskAlarmReceiver : BroadcastReceiver() {
 
@@ -19,13 +19,16 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         if (taskId == -1L) return
 
         val title = intent.getStringExtra("TASK_TITLE") ?: "Reminder"
-        val desc  = intent.getStringExtra("TASK_DESC") ?: ""
+        val desc = intent.getStringExtra("TASK_DESC") ?: ""
 
-        Log.d("TaskAlarmReceiver", "Alarm fired for taskId=$taskId")
+        Log.d("TaskAlarmReceiver", "Alarm fired for taskId=$taskId title=$title")
 
         val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-        val wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"TaskPulse:AlarmWakeLock")
-        wakeLock.acquire(10000)
+        val wakeLock = pm.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "TaskPulse:AlarmWakeLock"
+        )
+        wakeLock.acquire(10_000L)
 
         try {
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -36,18 +39,26 @@ class TaskAlarmReceiver : BroadcastReceiver() {
                 .setPriority(Notification.PRIORITY_MAX)
                 .setAutoCancel(true)
                 .build()
-
             nm.notify(taskId.toInt(), notif)
 
-            val serviceIntent = Intent(context, OverlayService::class.java)
-                .putExtra("TASK_ID", taskId)
-                .putExtra("TASK_TITLE", title)
-                .putExtra("TASK_DESC", desc)
+            val popupIntent = Intent(context, OverlayActivity::class.java).apply {
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+                )
+                putExtra("TASK_ID", taskId)
+                putExtra("TASK_TITLE", title)
+                putExtra("TASK_DESC", desc)
+                putExtra("TASK_SHOW_OVERLAY", intent.getBooleanExtra("TASK_SHOW_OVERLAY", true))
+                putExtra("TASK_VIBRATE", intent.getBooleanExtra("TASK_VIBRATE", true))
+            }
 
-            context.startForegroundService(serviceIntent)
+            context.startActivity(popupIntent)
+            Log.d("TaskAlarmReceiver", "OverlayActivity launched for taskId=$taskId")
 
         } catch (e: Exception) {
-            Log.e("TaskAlarmReceiver", "Receiver error", e)
+            Log.e("TaskAlarmReceiver", "Receiver failed", e)
         } finally {
             if (wakeLock.isHeld) wakeLock.release()
         }
