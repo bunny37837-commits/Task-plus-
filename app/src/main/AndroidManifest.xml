@@ -19,7 +19,7 @@
         android:allowBackup="false"
         android:hardwareAccelerated="true"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Material3.DayNight.NoActionBar">
+        android:theme="@style/Theme.TaskPulse">
 
         <activity
             android:name=".app.MainActivity"
@@ -43,7 +43,7 @@
             android:name=".app.overlay.OverlayService"
             android:exported="false"
             android:stopWithTask="false"
-            android:foregroundServiceType="alarm" />
+            android:foregroundServiceType="specialUse" />
 
         <receiver
             android:name=".app.worker.BootReceiver"
