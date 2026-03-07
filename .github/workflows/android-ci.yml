@@ -31,179 +31,23 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Verify Gradle wrapper
-        run: |
-          set -o pipefail
-          ./gradlew wrapper --no-daemon --stacktrace 2>&1 | tee verify-wrapper.log
-
       - name: Compile Kotlin
         id: compile_kotlin
         run: |
-          set -o pipefail
-          ./gradlew compileDebugKotlin --no-daemon --stacktrace --info --warning-mode all 2>&1 | tee compile-kotlin.log
+          ./gradlew compileDebugKotlin --no-daemon --stacktrace 2>&1 | tee compile-kotlin.log
+          exit ${PIPESTATUS[0]}
 
-      - name: Summarize Kotlin failure
-        if: failure() && steps.compile_kotlin.outcome == 'failure'
-        shell: bash
+      - name: Show Kotlin errors
+        if: failure()
         run: |
-          echo "## ❌ Compile Kotlin failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### First likely error lines (with context)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```text' >> "$GITHUB_STEP_SUMMARY"
-          grep -B3 -A8 -m 10 -E "e: |ERROR:|Execution failed for task|Unresolved reference|Type mismatch|No value passed|Expecting" compile-kotlin.log >> "$GITHUB_STEP_SUMMARY" || echo "No direct Kotlin error line matched." >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> "$GITHUB_STEP_SUMMARY"
+          echo "========== KOTLIN ERRORS =========="
+          grep -E "^e:|error:|Unresolved reference|Type mismatch|Expecting|None of the following|Overload resolution" compile-kotlin.log || cat compile-kotlin.log | tail -100
+          echo "==================================="
 
-          while IFS= read -r line; do
-            if [[ "$line" =~ ^e:\ ([^:]+):([0-9]+):([0-9]+):\ (.*)$ ]]; then
-              file="${BASH_REMATCH[1]}"
-              ln="${BASH_REMATCH[2]}"
-              col="${BASH_REMATCH[3]}"
-              msg="${BASH_REMATCH[4]}"
-              echo "::error file=$file,line=$ln,col=$col::$msg"
-            elif [[ "$line" =~ ^e:\ ([^:]+):([0-9]+):\ (.*)$ ]]; then
-              file="${BASH_REMATCH[1]}"
-              ln="${BASH_REMATCH[2]}"
-              msg="${BASH_REMATCH[3]}"
-              echo "::error file=$file,line=$ln::$msg"
-            fi
-          done < compile-kotlin.log
-
-      - name: Process resources
-        id: process_resources
-        if: success()
-        run: |
-          set -o pipefail
-          ./gradlew processDebugResources --no-daemon --stacktrace --info --warning-mode all 2>&1 | tee process-resources.log
-
-      - name: Summarize resource failure
-        if: failure() && steps.process_resources.outcome == 'failure'
-        shell: bash
-        run: |
-          echo "## ❌ Process Resources failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### First likely error lines (with context)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```text' >> "$GITHUB_STEP_SUMMARY"
-          grep -B3 -A8 -m 10 -E "ERROR:|AAPT:|Execution failed for task|Android resource linking failed|Manifest merger failed" process-resources.log >> "$GITHUB_STEP_SUMMARY" || echo "No direct resource error line matched." >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Lint project
-        id: lint_project
-        if: success()
-        run: |
-          set -o pipefail
-          ./gradlew lintDebug --no-daemon --stacktrace --info --warning-mode all 2>&1 | tee lint.log
-
-      - name: Summarize lint failure
-        if: failure() && steps.lint_project.outcome == 'failure'
-        shell: bash
-        run: |
-          echo "## ❌ Lint failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### First likely error lines (with context)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```text' >> "$GITHUB_STEP_SUMMARY"
-          grep -B3 -A8 -m 10 -E "Error:|ERROR:|Execution failed for task|Lint found errors" lint.log >> "$GITHUB_STEP_SUMMARY" || echo "No direct lint error line matched." >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload verify logs on failure
+      - name: Upload logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: verify-failure-logs
-          path: |
-            *.log
-            **/build/reports/
-            **/build/outputs/logs/
+          name: failure-logs
+          path: compile-kotlin.log
 
-  build:
-    runs-on: ubuntu-latest
-    needs: verify
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
-        with:
-          add-job-summary: on-failure
-          build-scan-publish: true
-          build-scan-terms-of-use-url: https://gradle.com/terms-of-service
-          build-scan-terms-of-use-agree: "yes"
-
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-
-      - name: Build Debug APK
-        id: build_apk
-        run: |
-          set -o pipefail
-          ./gradlew assembleDebug --no-daemon --stacktrace --info --warning-mode all --scan 2>&1 | tee build-apk.log
-
-      - name: Summarize APK build failure
-        if: failure() && steps.build_apk.outcome == 'failure'
-        shell: bash
-        run: |
-          echo "## ❌ Build Debug APK failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### First likely error lines (with context)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```text' >> "$GITHUB_STEP_SUMMARY"
-          grep -B3 -A8 -m 10 -E "e: |ERROR:|Execution failed for task|AAPT:|Unresolved reference|Type mismatch|Android resource linking failed" build-apk.log >> "$GITHUB_STEP_SUMMARY" || echo "No direct APK build error line matched." >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Build Release Bundle
-        id: build_aab
-        if: success()
-        run: |
-          set -o pipefail
-          ./gradlew bundleRelease --no-daemon --stacktrace --info --warning-mode all --scan 2>&1 | tee build-aab.log
-
-      - name: Summarize AAB build failure
-        if: failure() && steps.build_aab.outcome == 'failure'
-        shell: bash
-        run: |
-          echo "## ❌ Build Release Bundle failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### First likely error lines (with context)" >> "$GITHUB_STEP_SUMMARY"
-          echo '```text' >> "$GITHUB_STEP_SUMMARY"
-          grep -B3 -A8 -m 10 -E "e: |ERROR:|Execution failed for task|AAPT:|Unresolved reference|Type mismatch|Android resource linking failed" build-aab.log >> "$GITHUB_STEP_SUMMARY" || echo "No direct AAB build error line matched." >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "📊 Full Build Scan + detailed logs: Check job summary above or artifact" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload APK
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: TaskPulse-debug
-          path: app/build/outputs/apk/debug/*.apk
-
-      - name: Upload AAB
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: TaskPulse-release
-          path: app/build/outputs/bundle/release/*.aab
-
-      - name: Upload build logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-failure-logs
-          path: |
-            *.log
-            **/build/reports/
-            **/build/outputs/logs/
