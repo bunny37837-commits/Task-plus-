@@ -8,6 +8,7 @@ import com.taskpulse.app.domain.usecase.GetPendingTasksUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.time.LocalDateTime
+import kotlinx.coroutines.flow.first
 
 @HiltWorker
 class RescheduleTasksWorker @AssistedInject constructor(
@@ -20,10 +21,9 @@ class RescheduleTasksWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         return try {
             val now = LocalDateTime.now()
-            getPendingTasksUseCase().collect { tasks ->
-                tasks.filter { it.scheduledDateTime.isAfter(now) }
-                    .forEach { alarmScheduler.schedule(it) }
-            }
+            val tasks = getPendingTasksUseCase().first() // ✅ sirf ek baar read
+            tasks.filter { it.scheduledDateTime.isAfter(now) }
+                 .forEach { alarmScheduler.schedule(it) }
             Result.success()
         } catch (e: Exception) {
             Result.retry()
