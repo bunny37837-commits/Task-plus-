@@ -25,7 +25,7 @@
         android:theme="@style/Theme.TaskPulse">
 
         <activity
-            android:name=".app.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -35,7 +35,7 @@
         </activity>
 
         <activity
-            android:name=".app.overlay.OverlayActivity"
+            android:name=".overlay.OverlayActivity"
             android:exported="false"
             android:showOnLockScreen="true"
             android:turnScreenOn="true"
@@ -43,13 +43,13 @@
             android:launchMode="singleInstance" />
 
         <service
-            android:name=".app.overlay.OverlayService"
+            android:name=".overlay.OverlayService"
             android:exported="false"
             android:stopWithTask="false"
             android:foregroundServiceType="specialUse" />
 
         <receiver
-            android:name=".app.worker.BootReceiver"
+            android:name=".worker.BootReceiver"
             android:exported="true"
             android:directBootAware="true">
             <intent-filter>
@@ -60,7 +60,7 @@
         </receiver>
 
         <receiver
-            android:name=".app.worker.TaskAlarmReceiver"
+            android:name=".worker.TaskAlarmReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.taskpulse.TASK_ALARM" />
