@@ -76,9 +76,9 @@ class OverlayService : Service() {
     private fun ensureNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            if (nm.getNotificationChannel(TaskPulseApp.CHANNEL_REMINDER) == null) {
+            if (nm.getNotificationChannel(TaskPulseApp.CHANNEL_REMINDERS) == null) {
                 val channel = NotificationChannel(
-                    TaskPulseApp.CHANNEL_REMINDER,
+                    TaskPulseApp.CHANNEL_REMINDERS,
                     "Task Reminders",
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
@@ -97,7 +97,7 @@ class OverlayService : Service() {
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val notif = Notification.Builder(this, TaskPulseApp.CHANNEL_REMINDER)
+        val notif = Notification.Builder(this, TaskPulseApp.CHANNEL_REMINDERS)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
             .setContentText(desc.ifBlank { "Tap to open" })

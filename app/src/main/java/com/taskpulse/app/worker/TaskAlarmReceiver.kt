@@ -45,7 +45,7 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         } catch (e: Exception) {
             // Fallback: plain notification
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val notif = Notification.Builder(context, TaskPulseApp.CHANNEL_REMINDER)
+            val notif = Notification.Builder(context, TaskPulseApp.CHANNEL_REMINDERS)
                 .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
                 .setContentTitle(title)
                 .setContentText(desc)
