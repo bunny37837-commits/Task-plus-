@@ -62,10 +62,12 @@ class ExactAlarmScheduler @Inject constructor(
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
 
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent
-            )
-            Log.d(TAG, "Alarm scheduled: ${task.title}")
+            // setAlarmClock — highest priority, HyperOS/MIUI bypass
+            // System clock icon dikhta hai, Doze ignore karta hai
+            val alarmInfo = AlarmManager.AlarmClockInfo(triggerTime, pendingIntent)
+            alarmManager.setAlarmClock(alarmInfo, pendingIntent)
+
+            Log.d(TAG, "AlarmClock scheduled: ${task.title} at $triggerTime")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to schedule", e)
         }
