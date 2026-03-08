@@ -10,6 +10,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.taskpulse.app.TaskPulseApp
 import com.taskpulse.app.alert.AlertActivity
+import com.taskpulse.app.overlay.OverlayService
 
 class TaskAlarmReceiver : BroadcastReceiver() {
 
@@ -66,6 +67,20 @@ class TaskAlarmReceiver : BroadcastReceiver() {
 
             // Extra launch attempt for OEMs that ignore fullScreenIntent
             context.startActivity(fullScreenIntent)
+
+            if (showOverlay) {
+                val serviceIntent = Intent(context, OverlayService::class.java).apply {
+                    putExtra("TASK_ID", taskId)
+                    putExtra("TASK_TITLE", title)
+                    putExtra("TASK_DESC", desc)
+                    putExtra("TASK_SHOW_OVERLAY", true)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent)
+                } else {
+                    context.startService(serviceIntent)
+                }
+            }
 
         } finally {
             if (wakeLock.isHeld) wakeLock.release()
