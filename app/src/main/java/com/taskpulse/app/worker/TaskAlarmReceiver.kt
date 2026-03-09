@@ -22,6 +22,7 @@ class TaskAlarmReceiver : BroadcastReceiver() {
 
         val title = intent.getStringExtra("TASK_TITLE") ?: "Reminder"
         val desc = intent.getStringExtra("TASK_DESC") ?: ""
+        val showOverlay = intent.getBooleanExtra("TASK_SHOW_OVERLAY", true)
 
         val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         val wakeLock = pm.newWakeLock(
