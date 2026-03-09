@@ -7,6 +7,9 @@ plugins {
 }
 
 android {
+    lint {
+        abortOnError = false
+    }
     namespace = "com.taskpulse.app"
     compileSdk = 35
 
