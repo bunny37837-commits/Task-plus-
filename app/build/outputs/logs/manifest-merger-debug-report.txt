@@ -1,6 +1,6 @@
 -- Merging decision tree log ---
 provider#androidx.startup.InitializationProvider
-INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:76:9-85:20
+INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:70:9-77:20
 MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:29:9-37:20
 MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:29:9-37:20
 MERGED from [androidx.emoji2:emoji2:1.3.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/ded0bd246b0a4425e1ef7efcb109365f/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
@@ -11,20 +11,18 @@ MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] /data/data/com.te
 MERGED from [androidx.profileinstaller:profileinstaller:1.4.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/055a2453cd54668e2c443fa177e96dce/transformed/profileinstaller-1.4.0/AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.startup:startup-runtime:1.1.1] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/c1361b56851c13a0fd9662c8ee236376/transformed/startup-runtime-1.1.1/AndroidManifest.xml:26:9-30:34
 MERGED from [androidx.startup:startup-runtime:1.1.1] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/c1361b56851c13a0fd9662c8ee236376/transformed/startup-runtime-1.1.1/AndroidManifest.xml:26:9-30:34
-	tools:node
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:80:13-31
 	android:authorities
 		INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:78:13-68
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:72:13-68
 	android:exported
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:79:13-37
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:73:13-37
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:77:13-67
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:71:13-67
 manifest
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:2:1-88:12
-INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:2:1-88:12
-INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:2:1-88:12
-INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:2:1-88:12
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:2:1-89:12
+INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:2:1-89:12
+INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:2:1-89:12
+INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:2:1-89:12
 MERGED from [androidx.hilt:hilt-work:1.2.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/6985a976279e3a575b0f0d8fb9020f04/transformed/hilt-work-1.2.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.work:work-runtime-ktx:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/3e1ded2047ee5d7bace8adf886aeeb02/transformed/work-runtime-ktx-2.10.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:17:1-145:12
@@ -118,57 +116,69 @@ MERGED from [com.google.dagger:dagger-lint-aar:2.53] /data/data/com.termux/files
 		INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml
 	android:versionName
 		INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml
-	xmlns:tools
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:3:5-51
 	android:versionCode
 		INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml
 	xmlns:android
 		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:2:11-69
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:4:5-79
+MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:24:5-79
+MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:24:5-79
+	android:name
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:4:22-76
 uses-permission#android.permission.RECEIVE_BOOT_COMPLETED
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:6:5-80
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:5:5-81
 MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:25:5-81
 MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:25:5-81
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:6:22-78
-uses-permission#android.permission.SCHEDULE_EXACT_ALARM
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:7:5-78
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:5:22-78
+uses-permission#android.permission.VIBRATE
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:6:5-66
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:7:22-76
-uses-permission#android.permission.SYSTEM_ALERT_WINDOW
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:6:22-63
+uses-permission#android.permission.WAKE_LOCK
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:7:5-68
+MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:23:5-68
+MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:23:5-68
+	android:name
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:7:22-65
+uses-permission#android.permission.POST_NOTIFICATIONS
 ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:8:5-77
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:8:22-75
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:8:22-74
+uses-permission#android.permission.SCHEDULE_EXACT_ALARM
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:9:5-79
+	android:name
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:9:22-76
+uses-permission#android.permission.USE_EXACT_ALARM
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:10:5-74
+	android:name
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:10:22-71
+uses-permission#android.permission.SYSTEM_ALERT_WINDOW
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:11:5-78
+	android:name
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:11:22-75
+uses-permission#android.permission.USE_FULL_SCREEN_INTENT
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:12:5-81
+	android:name
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:12:22-78
 uses-permission#android.permission.FOREGROUND_SERVICE
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:9:5-76
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:13:5-77
 MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:26:5-77
 MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:26:5-77
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:9:22-74
-uses-permission#android.permission.FOREGROUND_SERVICE_SPECIAL_USE
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:10:5-88
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:13:22-74
+uses-permission#android.permission.FOREGROUND_SERVICE_ALARM
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:14:5-83
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:10:22-86
-uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:11:5-76
-	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:11:22-74
-uses-permission#android.permission.WAKE_LOCK
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:12:5-67
-MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:23:5-68
-MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:23:5-68
-	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:12:22-65
-uses-permission#android.permission.VIBRATE
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:13:5-65
-	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:13:22-63
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:14:22-80
 uses-permission#android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:14:5-94
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:15:5-95
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:14:22-92
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:15:22-92
 application
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:16:5-87:19
-INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:16:5-87:19
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:17:5-87:19
+INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:17:5-87:19
 MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:28:5-143:19
 MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:28:5-143:19
 MERGED from [com.airbnb.android:lottie:6.6.2] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/d59480c59473750efd86692eda19956d/transformed/lottie-6.6.2/AndroidManifest.xml:7:5-20
@@ -196,106 +206,109 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /data/data/
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.15.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/f6fcd45b395ea0b19338bb3ec4916c9e/transformed/core-1.15.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:22:9-35
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:24:9-35
 	android:label
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:20:9-41
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:21:9-34
 	android:hardwareAccelerated
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:24:9-43
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:20:9-43
 	android:roundIcon
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:21:9-54
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:23:9-54
 	android:icon
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:19:9-43
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:22:9-43
 	android:allowBackup
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:18:9-35
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:19:9-36
 	android:theme
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:23:9-47
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:25:9-47
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:17:9-37
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:18:9-37
 activity#com.taskpulse.app.MainActivity
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:26:9-34:20
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:27:9-35:20
+	android:windowSoftInputMode
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:30:13-55
 	android:exported
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:28:13-36
-	android:theme
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:29:13-58
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:29:13-36
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:27:13-41
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:28:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:30:13-33:29
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:31:13-34:29
 action#android.intent.action.MAIN
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:31:17-68
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:32:17-69
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:31:25-66
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:32:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:32:17-76
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:33:17-77
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:32:27-74
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:33:27-74
 activity#com.taskpulse.app.overlay.OverlayActivity
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:37:9-44:48
-	android:turnScreenOn
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:42:13-40
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:37:9-43:51
 	android:excludeFromRecents
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:44:13-46
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:42:13-46
 	android:launchMode
 		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:43:13-48
 	android:exported
 		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:39:13-37
-	android:showOnLockScreen
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:41:13-44
-	android:theme
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:40:13-59
 	android:name
 		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:38:13-52
 service#com.taskpulse.app.overlay.OverlayService
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:47:9-54:19
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:45:9-49:58
 	android:exported
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:49:13-37
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:47:13-37
+	android:stopWithTask
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:48:13-41
 	android:foregroundServiceType
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:50:13-55
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:49:13-55
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:48:13-51
-property#android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:51:13-53:40
-	android:value
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:53:17-38
-	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:52:17-76
-receiver#com.taskpulse.app.worker.TaskAlarmReceiver
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:57:9-63:20
-	android:exported
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:59:13-37
-	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:58:13-53
-intent-filter#action:name:com.taskpulse.TASK_ALARM
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:60:13-62:29
-action#com.taskpulse.TASK_ALARM
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:61:17-66
-	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:61:25-64
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:46:13-51
 receiver#com.taskpulse.app.worker.BootReceiver
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:66:9-73:20
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:51:9-60:20
 	android:exported
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:68:13-36
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:53:13-36
+	android:directBootAware
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:54:13-43
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:67:13-48
-intent-filter#action:name:android.intent.action.BOOT_COMPLETED+action:name:android.intent.action.QUICKBOOT_POWERON
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:69:13-72:29
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:52:13-48
+intent-filter#action:name:android.intent.action.BOOT_COMPLETED+action:name:android.intent.action.QUICKBOOT_POWERON+action:name:com.miui.intent.action.BOOT_COMPLETED
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:55:13-59:29
 action#android.intent.action.BOOT_COMPLETED
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:70:17-78
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:56:17-79
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:70:25-76
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:56:25-76
 action#android.intent.action.QUICKBOOT_POWERON
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:71:17-81
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:57:17-82
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:71:25-79
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:57:25-79
+action#com.miui.intent.action.BOOT_COMPLETED
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:58:17-80
+	android:name
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:58:25-77
+receiver#com.taskpulse.app.worker.TaskAlarmReceiver
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:62:9-68:20
+	android:exported
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:64:13-37
+	android:name
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:63:13-53
+intent-filter#action:name:com.taskpulse.TASK_ALARM
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:65:13-67:29
+action#com.taskpulse.TASK_ALARM
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:66:17-67
+	android:name
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:66:25-64
+activity#com.taskpulse.app.alert.AlertActivity
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:80:9-85:16
+	android:excludeFromRecents
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:83:13-46
+	android:exported
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:82:13-37
+	android:name
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:81:13-48
 meta-data#androidx.work.WorkManagerInitializer
-ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:81:13-84:38
-REJECTED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:34:13-36:52
-	tools:node
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:84:17-36
+ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:74:13-76:52
+MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:34:13-36:52
+MERGED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:34:13-36:52
 	android:value
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:83:17-49
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:76:17-49
 	android:name
-		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:82:17-68
+		ADDED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml:75:17-68
 uses-sdk
 INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml
@@ -482,10 +495,6 @@ MERGED from [com.google.dagger:dagger-lint-aar:2.53] /data/data/com.termux/files
 		INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml
 	android:minSdkVersion
 		INJECTED from /storage/emulated/0/Download/TaskPulse/app/src/main/AndroidManifest.xml
-uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:24:5-79
-	android:name
-		ADDED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:24:22-76
 service#androidx.work.impl.background.systemalarm.SystemAlarmService
 ADDED from [androidx.work:work-runtime:2.10.0] /data/data/com.termux/files/home/.gradle/caches/9.3.1/transforms/adf788b9b56413b14230dc3c5cb90a29/transformed/work-runtime-2.10.0/AndroidManifest.xml:39:9-45:35
 	android:enabled
