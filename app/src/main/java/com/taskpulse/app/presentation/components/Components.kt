@@ -1,26 +1,24 @@
 package com.taskpulse.app.presentation.components
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,8 +26,6 @@ import com.taskpulse.app.domain.model.Priority
 import com.taskpulse.app.domain.model.Task
 import com.taskpulse.app.presentation.ui.theme.*
 import java.time.format.DateTimeFormatter
-
-// ─── GradientButton ──────────────────────────────────────────────────────────
 
 @Composable
 fun GradientButton(
@@ -42,7 +38,10 @@ fun GradientButton(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(if (enabled) gradient else Brush.horizontalGradient(listOf(TextMuted, TextMuted)))
+            .background(
+                if (enabled) gradient
+                else Brush.horizontalGradient(listOf(TextMuted, TextMuted))
+            )
             .clickable(enabled = enabled, onClick = onClick)
             .padding(vertical = 16.dp),
         contentAlignment = Alignment.Center,
@@ -55,8 +54,6 @@ fun GradientButton(
         )
     }
 }
-
-// ─── PriorityIndicator ───────────────────────────────────────────────────────
 
 @Composable
 fun PriorityChip(
@@ -99,8 +96,6 @@ fun Priority.toColor() = when (this) {
     Priority.CRITICAL -> PriorityCritical
 }
 
-// ─── TaskCard ─────────────────────────────────────────────────────────────────
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskCard(
@@ -117,8 +112,14 @@ fun TaskCard(
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             when (value) {
-                SwipeToDismissBoxValue.EndToStart -> { onDelete(); true }
-                SwipeToDismissBoxValue.StartToEnd -> { onComplete(); true }
+                SwipeToDismissBoxValue.EndToStart -> {
+                    onDelete()
+                    true
+                }
+                SwipeToDismissBoxValue.StartToEnd -> {
+                    onComplete()
+                    true
+                }
                 else -> false
             }
         }
@@ -128,27 +129,37 @@ fun TaskCard(
         state = dismissState,
         backgroundContent = {
             val direction = dismissState.dismissDirection
-            val color by animateColorAsState(
-                when (dismissState.targetValue) {
-                    SwipeToDismissBoxValue.StartToEnd -> Success.copy(alpha = 0.2f)
-                    SwipeToDismissBoxValue.EndToStart -> Danger.copy(alpha = 0.2f)
+            val isCompleteSwipe = direction == SwipeToDismissBoxValue.StartToEnd
+            val isDeleteSwipe = direction == SwipeToDismissBoxValue.EndToStart
+
+            val bgColor by animateColorAsState(
+                targetValue = when {
+                    isCompleteSwipe -> Success.copy(alpha = 0.18f)
+                    isDeleteSwipe -> Danger.copy(alpha = 0.18f)
                     else -> SurfaceCard
-                }, label = "swipe_bg"
+                },
+                label = "task_swipe_bg"
             )
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(color),
-                contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd)
-                    Alignment.CenterStart else Alignment.CenterEnd,
+                    .background(bgColor),
+                contentAlignment = when {
+                    isCompleteSwipe -> Alignment.CenterStart
+                    isDeleteSwipe -> Alignment.CenterEnd
+                    else -> Alignment.Center
+                },
             ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = if (direction == SwipeToDismissBoxValue.StartToEnd) Success else Danger,
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                )
+                if (isCompleteSwipe || isDeleteSwipe) {
+                    Icon(
+                        imageVector = if (isCompleteSwipe) Icons.Default.Check else Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = if (isCompleteSwipe) Success else Danger,
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                    )
+                }
             }
         },
         modifier = modifier,
@@ -161,8 +172,10 @@ fun TaskCard(
             color = SurfaceCard,
             border = BorderStroke(1.dp, BorderColor),
         ) {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                // Left priority bar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Box(
                     modifier = Modifier
                         .width(4.dp)
@@ -172,14 +185,18 @@ fun TaskCard(
                             shape = RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp),
                         ),
                 )
+
                 Column(
                     modifier = Modifier
-                        .padding(horizontal = 14.dp, vertical = 14.dp)
-                        .weight(1f),
+                        .weight(1f)
+                        .padding(start = 14.dp, top = 14.dp, bottom = 14.dp, end = 8.dp),
                 ) {
-                    // Category chip
                     task.category?.let { cat ->
-                        val catColor = Color(android.graphics.Color.parseColor(cat.colorHex))
+                        val catColor = remember(cat.colorHex) {
+                            runCatching { Color(android.graphics.Color.parseColor(cat.colorHex)) }
+                                .getOrDefault(PrimaryPurple)
+                        }
+
                         Surface(
                             shape = RoundedCornerShape(6.dp),
                             color = catColor.copy(alpha = 0.15f),
@@ -194,24 +211,36 @@ fun TaskCard(
                             )
                         }
                     }
+
                     Text(
                         text = task.title,
                         style = MaterialTheme.typography.titleMedium,
                         color = TextPrimary,
                     )
+
                     Spacer(Modifier.height(4.dp))
+
                     Text(
                         text = "${task.scheduledDateTime.format(timeFormatter)} · ${task.scheduledDateTime.format(dateFormatter)}",
                         fontSize = 12.sp,
                         color = TextSecondary,
                     )
                 }
+
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.padding(end = 6.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete task",
+                        tint = Danger,
+                    )
+                }
             }
         }
     }
 }
-
-// ─── SectionHeader ────────────────────────────────────────────────────────────
 
 @Composable
 fun SectionHeader(title: String, modifier: Modifier = Modifier) {
@@ -223,11 +252,14 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     )
 }
 
-// ─── EmptyState ───────────────────────────────────────────────────────────────
-
 @Composable
 fun EmptyState(message: String, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(48.dp),
+        contentAlignment = Alignment.Center
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text("🎉", fontSize = 48.sp)
             Spacer(Modifier.height(12.dp))
