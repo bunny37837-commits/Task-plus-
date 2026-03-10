@@ -66,6 +66,8 @@ jobs:
 
       - name: Lint Debug
         id: lint
+        if: always()
+        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
@@ -73,6 +75,8 @@ jobs:
 
       - name: Unit Tests
         id: unit_tests
+        if: always()
+        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
@@ -80,6 +84,8 @@ jobs:
 
       - name: Assemble Debug
         id: assemble
+        if: always()
+        continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
@@ -118,7 +124,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Annotate Kotlin/Gradle errors
-        if: failure()
+        if: always()
         shell: bash
         run: |
           set +e
@@ -139,6 +145,14 @@ jobs:
               fi
             done < "$f"
           done
+
+      - name: Fail job if any verification step failed
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.lint.outcome }}" = "success" \
+            && test "${{ steps.unit_tests.outcome }}" = "success" \
+            && test "${{ steps.assemble.outcome }}" = "success"
 
       - name: Upload APK
         if: always()
