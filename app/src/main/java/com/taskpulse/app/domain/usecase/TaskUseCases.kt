@@ -3,6 +3,7 @@ package com.taskpulse.app.domain.usecase
 import com.taskpulse.app.domain.model.Task
 import com.taskpulse.app.domain.model.TaskStatus
 import com.taskpulse.app.domain.repository.TaskRepository
+import com.taskpulse.app.worker.ExactAlarmScheduler
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -16,8 +17,14 @@ class UpdateTaskUseCase @Inject constructor(private val repo: TaskRepository) {
     suspend operator fun invoke(task: Task) = repo.updateTask(task)
 }
 
-class DeleteTaskUseCase @Inject constructor(private val repo: TaskRepository) {
-    suspend operator fun invoke(task: Task) = repo.deleteTask(task)
+class DeleteTaskUseCase @Inject constructor(
+    private val repo: TaskRepository,
+    private val scheduler: ExactAlarmScheduler
+) {
+    suspend operator fun invoke(task: Task) {
+        scheduler.cancel(task.id)
+        repo.deleteTask(task)
+    }
 }
 
 class GetAllTasksUseCase @Inject constructor(private val repo: TaskRepository) {
@@ -36,14 +43,26 @@ class GetTaskByIdUseCase @Inject constructor(private val repo: TaskRepository) {
     suspend operator fun invoke(id: Long): Task? = repo.getTaskById(id)
 }
 
-class CompleteTaskUseCase @Inject constructor(private val repo: TaskRepository) {
-    suspend operator fun invoke(id: Long) = repo.completeTask(id, LocalDateTime.now())
+class CompleteTaskUseCase @Inject constructor(
+    private val repo: TaskRepository,
+    private val scheduler: ExactAlarmScheduler
+) {
+    suspend operator fun invoke(id: Long) {
+        scheduler.cancel(id)
+        repo.completeTask(id, LocalDateTime.now())
+    }
 }
 
-class SnoozeTaskUseCase @Inject constructor(private val repo: TaskRepository) {
+class SnoozeTaskUseCase @Inject constructor(
+    private val repo: TaskRepository,
+    private val scheduler: ExactAlarmScheduler
+) {
     suspend operator fun invoke(id: Long, minutes: Int) {
+        val task = repo.getTaskById(id) ?: return
         val until = LocalDateTime.now().plusMinutes(minutes.toLong())
         repo.snoozeTask(id, until)
+        scheduler.cancel(id)
+        scheduler.schedule(task.copy(scheduledDateTime = until))
     }
 }
 
