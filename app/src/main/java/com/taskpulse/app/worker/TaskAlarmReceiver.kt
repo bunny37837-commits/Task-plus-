@@ -8,12 +8,14 @@ import android.content.Intent
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.taskpulse.app.TaskPulseApp
 import com.taskpulse.app.alert.AlertActivity
 import com.taskpulse.app.overlay.OverlayService
 
 class TaskAlarmReceiver : BroadcastReceiver() {
+    private val tag = "TaskAlarmReceiver"
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != "com.taskpulse.TASK_ALARM") return
@@ -24,6 +26,14 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         val title = intent.getStringExtra("TASK_TITLE") ?: "Reminder"
         val desc = intent.getStringExtra("TASK_DESC") ?: ""
         val showOverlay = intent.getBooleanExtra("TASK_SHOW_OVERLAY", true)
+        val vibrate = intent.getBooleanExtra("TASK_VIBRATE", true)
+        val canDrawOverlays = Settings.canDrawOverlays(context)
+
+        Log.i(
+            tag,
+            "Receiver fired: taskId=$taskId, showOverlay=$showOverlay, vibrate=$vibrate, " +
+                "canDrawOverlays=$canDrawOverlays"
+        )
 
         val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         val wakeLock = pm.newWakeLock(
@@ -34,25 +44,34 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         wakeLock.acquire(10_000L)
 
         try {
-            if (showOverlay && Settings.canDrawOverlays(context)) {
+            if (showOverlay && canDrawOverlays) {
                 val serviceIntent = Intent(context, OverlayService::class.java).apply {
                     putExtra("TASK_ID", taskId)
                     putExtra("TASK_TITLE", title)
                     putExtra("TASK_DESC", desc)
                     putExtra("TASK_SHOW_OVERLAY", true)
+                    putExtra("TASK_VIBRATE", vibrate)
                 }
 
                 try {
+                    Log.i(tag, "Starting overlay service: taskId=$taskId")
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         context.startForegroundService(serviceIntent)
                     } else {
                         context.startService(serviceIntent)
                     }
+                    Log.i(tag, "Overlay service start request sent: taskId=$taskId")
                     postNotification(context, taskId, title, desc, fullScreen = false)
                 } catch (e: Exception) {
+                    Log.e(tag, "Overlay service start failed, using full-screen fallback: taskId=$taskId", e)
                     postNotification(context, taskId, title, desc, fullScreen = true)
                 }
             } else {
+                Log.w(
+                    tag,
+                    "Overlay unavailable, using full-screen fallback: taskId=$taskId, " +
+                        "showOverlay=$showOverlay, canDrawOverlays=$canDrawOverlays"
+                )
                 postNotification(context, taskId, title, desc, fullScreen = true)
             }
         } finally {
@@ -106,8 +125,8 @@ class TaskAlarmReceiver : BroadcastReceiver() {
             builder.setFullScreenIntent(fullScreenPendingIntent, true)
         }
 
+        Log.i(tag, "Posting fallback notification: taskId=$taskId, fullScreen=$fullScreen")
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(requestCode, builder.build())
     }
 }
-// ci trigger

@@ -1,7 +1,9 @@
 package com.taskpulse.app.alert
 
 import android.app.Activity
+import android.app.KeyguardManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,13 +20,34 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 class AlertActivity : ComponentActivity() {
+    private val tag = "AlertActivity"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                    android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                    android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            )
+        }
+
+        val keyguardManager = getSystemService(KeyguardManager::class.java)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            keyguardManager?.requestDismissKeyguard(this, null)
+        }
+
         enableEdgeToEdge()
 
         val taskId = intent.getLongExtra("TASK_ID", -1L)
         val title = intent.getStringExtra("TASK_TITLE") ?: "Reminder"
         val desc = intent.getStringExtra("TASK_DESC") ?: ""
+
+        Log.i(tag, "Alert activity launched: taskId=$taskId")
 
         setContent {
             MaterialTheme {

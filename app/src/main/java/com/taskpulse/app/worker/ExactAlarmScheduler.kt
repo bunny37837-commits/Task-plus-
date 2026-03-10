@@ -48,6 +48,12 @@ class ExactAlarmScheduler @Inject constructor(
                 .toInstant()
                 .toEpochMilli()
 
+            Log.d(
+                TAG,
+                "Scheduling alarm: taskId=${task.id}, title=${task.title}, triggerAt=$triggerTime, " +
+                    "showOverlay=${task.showOverlay}, vibrate=${task.vibrate}"
+            )
+
             val intent = Intent(context, TaskAlarmReceiver::class.java).apply {
                 action = "com.taskpulse.TASK_ALARM"
                 putExtra("TASK_ID", task.id)
@@ -67,9 +73,9 @@ class ExactAlarmScheduler @Inject constructor(
             val alarmInfo = AlarmManager.AlarmClockInfo(triggerTime, pendingIntent)
             alarmManager.setAlarmClock(alarmInfo, pendingIntent)
 
-            Log.d(TAG, "AlarmClock scheduled: ${task.title} at $triggerTime")
+            Log.i(TAG, "Alarm scheduled successfully: taskId=${task.id}, triggerAt=$triggerTime")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to schedule", e)
+            Log.e(TAG, "Failed to schedule alarm: taskId=${task.id}", e)
         }
     }
 
@@ -84,8 +90,9 @@ class ExactAlarmScheduler @Inject constructor(
             ) ?: return
             alarmManager.cancel(pi)
             pi.cancel()
+            Log.i(TAG, "Cancelled alarm: taskId=$taskId")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to cancel", e)
+            Log.e(TAG, "Failed to cancel alarm: taskId=$taskId", e)
         }
     }
 }

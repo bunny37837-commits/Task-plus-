@@ -11,6 +11,7 @@ import android.graphics.PixelFormat
 import android.media.Ringtone
 import android.media.RingtoneManager
 import android.os.*
+import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.runtime.Recomposer
@@ -23,6 +24,7 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.taskpulse.app.MainActivity
 import com.taskpulse.app.R
 import com.taskpulse.app.TaskPulseApp
+import com.taskpulse.app.alert.AlertActivity
 import com.taskpulse.app.domain.usecase.CompleteTaskUseCase
 import com.taskpulse.app.domain.usecase.SnoozeTaskUseCase
 import com.taskpulse.app.worker.ExactAlarmScheduler
@@ -32,6 +34,7 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class OverlayService : Service() {
+    private val tag = "OverlayService"
 
     @Inject lateinit var completeTaskUseCase: CompleteTaskUseCase
     @Inject lateinit var snoozeTaskUseCase: SnoozeTaskUseCase
@@ -57,6 +60,11 @@ class OverlayService : Service() {
         val desc        = intent?.getStringExtra("TASK_DESC") ?: ""
         val showOverlay = intent?.getBooleanExtra("TASK_SHOW_OVERLAY", true) ?: true
         val vibrate     = intent?.getBooleanExtra("TASK_VIBRATE", true) ?: true
+
+        Log.i(
+            tag,
+            "Service started: taskId=$taskId, showOverlay=$showOverlay, vibrate=$vibrate"
+        )
 
         startForegroundWithNotification(taskId, title, desc)
 
@@ -106,10 +114,12 @@ class OverlayService : Service() {
             .setOngoing(true)
             .build()
         startForeground(taskId.toInt().coerceAtLeast(1), notif)
+        Log.i(tag, "Foreground notification started: taskId=$taskId")
     }
 
     private fun doVibrate() {
         val pattern = longArrayOf(0, 700, 300, 700, 300, 700)
+        Log.i(tag, "Vibration attempt started")
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -124,7 +134,10 @@ class OverlayService : Service() {
                     vm.vibrate(pattern, -1)
                 }
             }
-        } catch (e: Exception) { /* silent */ }
+            Log.i(tag, "Vibration started successfully")
+        } catch (e: Exception) {
+            Log.e(tag, "Vibration failed", e)
+        }
     }
 
     private fun playRingtone() {
@@ -137,14 +150,20 @@ class OverlayService : Service() {
                 }
                 it.play()
             }
-        } catch (e: Exception) { /* silent */ }
+            Log.i(tag, "Ringtone started")
+        } catch (e: Exception) {
+            Log.e(tag, "Ringtone start failed", e)
+        }
     }
 
     private fun stopRingtone() {
         try {
             ringtone?.stop()
             ringtone = null
-        } catch (e: Exception) { /* silent */ }
+            Log.i(tag, "Ringtone stopped")
+        } catch (e: Exception) {
+            Log.e(tag, "Ringtone stop failed", e)
+        }
     }
 
     private fun showOverlay(taskId: Long, title: String, desc: String) {
@@ -212,8 +231,54 @@ class OverlayService : Service() {
         overlayView = view
         try {
             windowManager.addView(view, params)
+            Log.i(tag, "Overlay addView success: taskId=$taskId")
         } catch (e: Exception) {
+            Log.e(tag, "Overlay addView failed: taskId=$taskId", e)
+            launchAlertFallback(taskId, title, desc)
             dismiss()
+        }
+    }
+
+    private fun launchAlertFallback(taskId: Long, title: String, desc: String) {
+        Log.w(tag, "Launching alert fallback: taskId=$taskId")
+
+        val fullScreenIntent = Intent(this, AlertActivity::class.java).apply {
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+            )
+            putExtra("TASK_ID", taskId)
+            putExtra("TASK_TITLE", title)
+            putExtra("TASK_DESC", desc)
+        }
+
+        val fullScreenPendingIntent = PendingIntent.getActivity(
+            this,
+            taskId.toInt().coerceAtLeast(1),
+            fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = Notification.Builder(this, TaskPulseApp.CHANNEL_REMINDERS)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentTitle(title)
+            .setContentText(desc.ifBlank { "Task reminder" })
+            .setCategory(Notification.CATEGORY_ALARM)
+            .setContentIntent(fullScreenPendingIntent)
+            .setAutoCancel(false)
+            .setOngoing(true)
+            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .build()
+
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.notify(taskId.toInt().coerceAtLeast(1), notification)
+
+        try {
+            startActivity(fullScreenIntent)
+            Log.i(tag, "Alert fallback activity launch requested: taskId=$taskId")
+        } catch (e: Exception) {
+            Log.e(tag, "Alert fallback activity launch failed: taskId=$taskId", e)
         }
     }
 
@@ -224,6 +289,7 @@ class OverlayService : Service() {
             try { windowManager.removeView(it) } catch (_: Exception) {}
         }
         overlayView = null
+        Log.i(tag, "Service dismiss called")
         stopSelf()
     }
 
@@ -234,5 +300,6 @@ class OverlayService : Service() {
         overlayView?.let {
             try { windowManager.removeView(it) } catch (_: Exception) {}
         }
+        Log.i(tag, "Service destroyed")
     }
 }
