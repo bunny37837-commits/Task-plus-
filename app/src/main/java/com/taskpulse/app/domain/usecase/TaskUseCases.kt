@@ -2,6 +2,7 @@ package com.taskpulse.app.domain.usecase
 
 import com.taskpulse.app.domain.model.Task
 import com.taskpulse.app.domain.model.TaskStatus
+import com.taskpulse.app.domain.model.nextRecurringOccurrence
 import com.taskpulse.app.domain.repository.TaskRepository
 import com.taskpulse.app.worker.ExactAlarmScheduler
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +49,20 @@ class CompleteTaskUseCase @Inject constructor(
     private val scheduler: ExactAlarmScheduler
 ) {
     suspend operator fun invoke(id: Long) {
+        val task = repo.getTaskById(id) ?: return
+        val nextOccurrence = task.nextRecurringOccurrence()
+        if (nextOccurrence != null) {
+            val nextTask = task.copy(
+                scheduledDateTime = nextOccurrence,
+                snoozedUntil = null,
+                status = TaskStatus.PENDING,
+                completedAt = null
+            )
+            scheduler.cancel(id)
+            repo.updateTask(nextTask)
+            scheduler.schedule(nextTask)
+            return
+        }
         scheduler.cancel(id)
         repo.completeTask(id, LocalDateTime.now())
     }
@@ -62,7 +77,12 @@ class SnoozeTaskUseCase @Inject constructor(
         val until = LocalDateTime.now().plusMinutes(minutes.toLong())
         repo.snoozeTask(id, until)
         scheduler.cancel(id)
-        scheduler.schedule(task.copy(scheduledDateTime = until))
+        scheduler.schedule(
+            task.copy(
+                snoozedUntil = until,
+                status = TaskStatus.SNOOZED
+            )
+        )
     }
 }
 

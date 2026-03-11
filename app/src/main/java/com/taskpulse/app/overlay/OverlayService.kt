@@ -283,12 +283,22 @@ class OverlayService : Service() {
                     taskTitle = title,
                     taskDesc  = desc,
                     onSnooze  = { minutes ->
-                        serviceScope.launch { snoozeTaskUseCase(taskId, minutes) }
-                        dismiss()
+                        serviceScope.launch {
+                            try {
+                                snoozeTaskUseCase(taskId, minutes)
+                            } finally {
+                                dismiss()
+                            }
+                        }
                     },
                     onComplete = {
-                        serviceScope.launch { completeTaskUseCase(taskId) }
-                        dismiss()
+                        serviceScope.launch {
+                            try {
+                                completeTaskUseCase(taskId)
+                            } finally {
+                                dismiss()
+                            }
+                        }
                     }
                 )
             }

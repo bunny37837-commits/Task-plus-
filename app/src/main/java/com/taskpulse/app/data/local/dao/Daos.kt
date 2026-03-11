@@ -37,7 +37,7 @@ interface TaskDao {
 
     @Query(
         "UPDATE tasks " +
-            "SET status = 'SNOOZED', snoozedUntil = :until, scheduledDateTime = :until, updatedAt = :now " +
+            "SET status = 'SNOOZED', snoozedUntil = :until, updatedAt = :now " +
             "WHERE id = :id"
     )
     suspend fun snoozeTask(id: Long, until: String, now: String)
@@ -47,7 +47,8 @@ interface TaskDao {
 
     @Query(
         "SELECT * FROM tasks " +
-            "WHERE status IN ('PENDING', 'SNOOZED') AND scheduledDateTime > :now"
+            "WHERE status IN ('PENDING', 'SNOOZED') " +
+            "AND COALESCE(snoozedUntil, scheduledDateTime) > :now"
     )
     fun getPendingTasksForReschedule(now: String): Flow<List<TaskEntity>>
 }

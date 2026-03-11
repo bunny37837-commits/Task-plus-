@@ -45,11 +45,9 @@ class HomeViewModel @Inject constructor(
 
     fun completeTask(task: Task) = viewModelScope.launch {
         completeTaskUseCase(task.id)
-        alarmScheduler.cancel(task.id)
     }
 
     fun deleteTask(task: Task) = viewModelScope.launch {
         deleteTaskUseCase(task)
-        alarmScheduler.cancel(task.id)
     }
 }

@@ -141,7 +141,9 @@ fun AddTaskScreen(
             // Recurrence
             FormSection(label = "🔁 Repeat") {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    RecurrenceType.entries.forEach { recType ->
+                    RecurrenceType.entries
+                        .filter { it != RecurrenceType.CUSTOM }
+                        .forEach { recType ->
                         val selected = state.recurrence == recType
                         Surface(
                             modifier = Modifier.clickable { viewModel.setRecurrence(recType) },

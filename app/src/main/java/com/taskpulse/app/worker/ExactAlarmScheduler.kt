@@ -43,7 +43,8 @@ class ExactAlarmScheduler @Inject constructor(
             return
         }
         try {
-            val triggerTime = task.scheduledDateTime
+            val triggerAt = task.snoozedUntil ?: task.scheduledDateTime
+            val triggerTime = triggerAt
                 .atZone(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli()
@@ -51,7 +52,8 @@ class ExactAlarmScheduler @Inject constructor(
             Log.d(
                 TAG,
                 "Scheduling alarm: taskId=${task.id}, title=${task.title}, triggerAt=$triggerTime, " +
-                    "showOverlay=${task.showOverlay}, vibrate=${task.vibrate}"
+                    "showOverlay=${task.showOverlay}, vibrate=${task.vibrate}, " +
+                    "snoozedUntil=${task.snoozedUntil}"
             )
 
             val intent = Intent(context, TaskAlarmReceiver::class.java).apply {
