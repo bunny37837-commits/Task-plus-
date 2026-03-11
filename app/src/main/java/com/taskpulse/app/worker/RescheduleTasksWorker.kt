@@ -1,6 +1,7 @@
 package com.taskpulse.app.worker
 
 import android.content.Context
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -17,15 +18,22 @@ class RescheduleTasksWorker @AssistedInject constructor(
     private val getPendingTasksUseCase: GetPendingTasksUseCase,
     private val alarmScheduler: ExactAlarmScheduler,
 ) : CoroutineWorker(context, params) {
+    private val tag = "RescheduleTasksWorker"
 
     override suspend fun doWork(): Result {
         return try {
             val now = LocalDateTime.now()
             val tasks = getPendingTasksUseCase().first() // ✅ sirf ek baar read
-            tasks.filter { it.scheduledDateTime.isAfter(now) }
-                 .forEach { alarmScheduler.schedule(it) }
+            val futureTasks = tasks.filter { it.scheduledDateTime.isAfter(now) }
+            Log.i(
+                tag,
+                "Reschedule started: totalPending=${tasks.size}, futurePending=${futureTasks.size}"
+            )
+            futureTasks.forEach { alarmScheduler.schedule(it) }
+            Log.i(tag, "Reschedule finished: rescheduled=${futureTasks.size}")
             Result.success()
         } catch (e: Exception) {
+            Log.e(tag, "Reschedule failed", e)
             Result.retry()
         }
     }

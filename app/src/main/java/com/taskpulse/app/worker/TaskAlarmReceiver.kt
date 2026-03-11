@@ -18,10 +18,16 @@ class TaskAlarmReceiver : BroadcastReceiver() {
     private val tag = "TaskAlarmReceiver"
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != "com.taskpulse.TASK_ALARM") return
+        if (intent.action != "com.taskpulse.TASK_ALARM") {
+            Log.w(tag, "Ignoring unexpected action: action=${intent.action}")
+            return
+        }
 
         val taskId = intent.getLongExtra("TASK_ID", -1L)
-        if (taskId == -1L) return
+        if (taskId == -1L) {
+            Log.e(tag, "Ignoring alarm with missing taskId")
+            return
+        }
 
         val title = intent.getStringExtra("TASK_TITLE") ?: "Reminder"
         val desc = intent.getStringExtra("TASK_DESC") ?: ""
@@ -86,6 +92,17 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         desc: String,
         fullScreen: Boolean
     ) {
+        val canUseFullScreenIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            context.getSystemService(NotificationManager::class.java)
+                .canUseFullScreenIntent()
+                .also { allowed ->
+                    Log.i(tag, "Full-screen intent eligibility: allowed=$allowed, taskId=$taskId")
+                }
+        } else {
+            Log.i(tag, "Full-screen intent eligibility: allowed=true, taskId=$taskId, api=<34")
+            true
+        }
+
         val requestCode = if (taskId in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) {
             taskId.toInt()
         } else {
@@ -121,11 +138,15 @@ class TaskAlarmReceiver : BroadcastReceiver() {
             .setOngoing(true)
             .setContentIntent(fullScreenPendingIntent)
 
-        if (fullScreen) {
+        if (fullScreen && canUseFullScreenIntent) {
             builder.setFullScreenIntent(fullScreenPendingIntent, true)
         }
 
-        Log.i(tag, "Posting fallback notification: taskId=$taskId, fullScreen=$fullScreen")
+        Log.i(
+            tag,
+            "Posting fallback notification: taskId=$taskId, requestedFullScreen=$fullScreen, " +
+                "effectiveFullScreen=${fullScreen && canUseFullScreenIntent}"
+        )
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(requestCode, builder.build())
     }

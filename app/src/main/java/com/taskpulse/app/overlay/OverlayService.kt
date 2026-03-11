@@ -14,6 +14,7 @@ import android.os.*
 import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
+import androidx.core.app.NotificationCompat
 import androidx.compose.runtime.Recomposer
 import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.platform.ComposeView
@@ -260,26 +261,40 @@ class OverlayService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = Notification.Builder(this, TaskPulseApp.CHANNEL_REMINDERS)
+        val canUseFullScreenIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            getSystemService(NotificationManager::class.java)
+                .canUseFullScreenIntent()
+                .also { allowed ->
+                    Log.i(tag, "Full-screen intent eligibility: allowed=$allowed, taskId=$taskId")
+                }
+        } else {
+            Log.i(tag, "Full-screen intent eligibility: allowed=true, taskId=$taskId, api=<34")
+            true
+        }
+
+        val notification = NotificationCompat.Builder(this, TaskPulseApp.CHANNEL_REMINDERS)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle(title)
             .setContentText(desc.ifBlank { "Task reminder" })
-            .setCategory(Notification.CATEGORY_ALARM)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(fullScreenPendingIntent)
             .setAutoCancel(false)
             .setOngoing(true)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
+            .apply {
+                if (canUseFullScreenIntent) {
+                    setFullScreenIntent(fullScreenPendingIntent, true)
+                }
+            }
             .build()
 
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(taskId.toInt().coerceAtLeast(1), notification)
-
-        try {
-            startActivity(fullScreenIntent)
-            Log.i(tag, "Alert fallback activity launch requested: taskId=$taskId")
-        } catch (e: Exception) {
-            Log.e(tag, "Alert fallback activity launch failed: taskId=$taskId", e)
-        }
+        Log.i(
+            tag,
+            "Alert fallback notification posted: taskId=$taskId, fullScreen=$canUseFullScreenIntent"
+        )
     }
 
     private fun dismiss() {

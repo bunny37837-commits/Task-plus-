@@ -1,5 +1,6 @@
 package com.taskpulse.app.presentation.addtask
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.taskpulse.app.domain.model.*
@@ -37,6 +38,8 @@ class AddTaskViewModel @Inject constructor(
     private val categoryRepository: com.taskpulse.app.domain.repository.CategoryRepository,
     private val alarmScheduler: ExactAlarmScheduler,
 ) : ViewModel() {
+    private val tag = "AddTaskViewModel"
+
 
     private val _state = MutableStateFlow(AddTaskUiState())
     val state: StateFlow<AddTaskUiState> = _state.asStateFlow()
@@ -114,9 +117,18 @@ class AddTaskViewModel @Inject constructor(
             }
 
             if (alarmScheduler.hasExactAlarmPermission()) {
+                Log.i(
+                    tag,
+                    "Scheduling reminder: taskId=${finalTask.id}, when=${finalTask.scheduledDateTime}"
+                )
                 alarmScheduler.schedule(finalTask)
                 _state.update { it.copy(isLoading = false, saved = true) }
             } else {
+                Log.w(
+                    tag,
+                    "Exact alarm permission missing, reminder not scheduled: " +
+                        "taskId=${finalTask.id}, when=${finalTask.scheduledDateTime}"
+                )
                 _state.update {
                     it.copy(
                         isLoading = false,

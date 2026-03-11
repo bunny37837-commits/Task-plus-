@@ -46,7 +46,7 @@
             android:name=".overlay.OverlayService"
             android:exported="false"
             android:stopWithTask="false"
-            android:foregroundServiceType="specialUse" />
+            android:foregroundServiceType="alarm" />
 
         <receiver
             android:name=".worker.BootReceiver"
