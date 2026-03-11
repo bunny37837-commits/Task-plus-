@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.pm.ServiceInfo
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
@@ -15,6 +16,7 @@ import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.compose.runtime.Recomposer
 import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.platform.ComposeView
@@ -131,7 +133,17 @@ class OverlayService : Service() {
             .setContentIntent(tapIntent)
             .setOngoing(true)
             .build()
-        startForeground(taskId.toInt().coerceAtLeast(1), notif)
+        val notificationId = taskId.toInt().coerceAtLeast(1)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            ServiceCompat.startForeground(
+                this,
+                notificationId,
+                notif,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(notificationId, notif)
+        }
         Log.i(tag, "Foreground notification started: taskId=$taskId")
     }
 
