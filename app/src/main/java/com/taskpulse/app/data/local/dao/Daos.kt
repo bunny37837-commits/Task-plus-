@@ -35,13 +35,20 @@ interface TaskDao {
     @Query("UPDATE tasks SET status = 'COMPLETED', completedAt = :completedAt, updatedAt = :now WHERE id = :id")
     suspend fun completeTask(id: Long, completedAt: String, now: String)
 
-    @Query("UPDATE tasks SET status = 'SNOOZED', snoozedUntil = :until, updatedAt = :now WHERE id = :id")
+    @Query(
+        "UPDATE tasks " +
+            "SET status = 'SNOOZED', snoozedUntil = :until, scheduledDateTime = :until, updatedAt = :now " +
+            "WHERE id = :id"
+    )
     suspend fun snoozeTask(id: Long, until: String, now: String)
 
     @Query("UPDATE tasks SET status = :status, updatedAt = :now WHERE id = :id")
     suspend fun updateStatus(id: Long, status: String, now: String)
 
-    @Query("SELECT * FROM tasks WHERE status = 'PENDING' AND scheduledDateTime > :now")
+    @Query(
+        "SELECT * FROM tasks " +
+            "WHERE status IN ('PENDING', 'SNOOZED') AND scheduledDateTime > :now"
+    )
     fun getPendingTasksForReschedule(now: String): Flow<List<TaskEntity>>
 }
 

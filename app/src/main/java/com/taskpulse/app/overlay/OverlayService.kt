@@ -1,5 +1,6 @@
 package com.taskpulse.app.overlay
 
+import android.app.ActivityOptions
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -291,7 +292,8 @@ class OverlayService : Service() {
             this,
             taskId.toInt().coerceAtLeast(1),
             fullScreenIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            fullScreenPendingIntentOptions()
         )
 
         val canUseFullScreenIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -329,6 +331,15 @@ class OverlayService : Service() {
             "Alert fallback notification posted: taskId=$taskId, fullScreen=$canUseFullScreenIntent"
         )
     }
+
+    private fun fullScreenPendingIntentOptions() =
+        ActivityOptions.makeBasic().apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                setPendingIntentCreatorBackgroundActivityStartMode(
+                    ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+                )
+            }
+        }.toBundle()
 
     private fun dismiss() {
         autoDismissJob?.cancel()

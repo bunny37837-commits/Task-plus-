@@ -1,7 +1,9 @@
 package com.taskpulse.app.worker
 
+import android.app.ActivityOptions
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.KeyguardManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -42,6 +44,7 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         )
 
         val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         val wakeLock = pm.newWakeLock(
             PowerManager.PARTIAL_WAKE_LOCK,
             "TaskPulse:AlarmWakeLock"
@@ -66,8 +69,16 @@ class TaskAlarmReceiver : BroadcastReceiver() {
                     } else {
                         context.startService(serviceIntent)
                     }
+                    val needsFullScreenAssist =
+                        !pm.isInteractive || keyguardManager.isKeyguardLocked
                     Log.i(tag, "Overlay service start request sent: taskId=$taskId")
-                    postNotification(context, taskId, title, desc, fullScreen = false)
+                    postNotification(
+                        context = context,
+                        taskId = taskId,
+                        title = title,
+                        desc = desc,
+                        fullScreen = needsFullScreenAssist
+                    )
                 } catch (e: Exception) {
                     Log.e(tag, "Overlay service start failed, using full-screen fallback: taskId=$taskId", e)
                     postNotification(context, taskId, title, desc, fullScreen = true)
@@ -124,7 +135,8 @@ class TaskAlarmReceiver : BroadcastReceiver() {
             context,
             requestCode,
             fullScreenIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            fullScreenPendingIntentOptions()
         )
 
         val builder = NotificationCompat.Builder(context, TaskPulseApp.CHANNEL_REMINDERS)
@@ -150,4 +162,13 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(requestCode, builder.build())
     }
+
+    private fun fullScreenPendingIntentOptions() =
+        ActivityOptions.makeBasic().apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                setPendingIntentCreatorBackgroundActivityStartMode(
+                    ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+                )
+            }
+        }.toBundle()
 }

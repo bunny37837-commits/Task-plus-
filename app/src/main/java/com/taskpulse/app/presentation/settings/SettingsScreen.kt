@@ -1,6 +1,7 @@
 package com.taskpulse.app.presentation.settings
 
 import android.app.AlarmManager
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -62,6 +63,7 @@ fun SettingsScreen(
 
     val exactAlarmGranted = remember(refreshTick) { hasExactAlarmPermission(context) }
     val overlayGranted = remember(refreshTick) { hasOverlayPermission(context) }
+    val fullScreenIntentGranted = remember(refreshTick) { hasFullScreenIntentPermission(context) }
     val notificationsGranted = remember(refreshTick) { hasNotificationPermission(context) }
     val batteryIgnored = remember(refreshTick) { isIgnoringBatteryOptimizations(context) }
 
@@ -93,6 +95,8 @@ fun SettingsScreen(
                 HorizontalDivider(color = BorderColor)
                 PermissionStatusRow("Overlay / draw over apps", overlayGranted)
                 HorizontalDivider(color = BorderColor)
+                PermissionStatusRow("Full-screen alerts", fullScreenIntentGranted)
+                HorizontalDivider(color = BorderColor)
                 PermissionStatusRow("Battery unrestricted", batteryIgnored)
             }
 
@@ -103,6 +107,10 @@ fun SettingsScreen(
                 Spacer(Modifier.height(8.dp))
                 SettingsActionButton("Open Overlay settings") {
                     openOverlaySettings(context)
+                }
+                Spacer(Modifier.height(8.dp))
+                SettingsActionButton("Open Full-screen alert settings") {
+                    openFullScreenIntentSettings(context)
                 }
                 Spacer(Modifier.height(8.dp))
                 SettingsActionButton("Open Notification settings") {
@@ -231,6 +239,11 @@ private fun hasNotificationPermission(context: Context): Boolean {
         ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 }
 
+private fun hasFullScreenIntentPermission(context: Context): Boolean {
+    return Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE ||
+        context.getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
+}
+
 private fun isIgnoringBatteryOptimizations(context: Context): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
     val pm = context.getSystemService(PowerManager::class.java)
@@ -251,6 +264,16 @@ private fun openExactAlarmSettings(context: Context) {
         context.startActivity(
             Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+    }
+}
+
+private fun openFullScreenIntentSettings(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        context.startActivity(
+            Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+                data = Uri.parse("package:${context.packageName}")
+            }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
     }
 }
