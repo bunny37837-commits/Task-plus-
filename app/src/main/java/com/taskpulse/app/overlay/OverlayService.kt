@@ -6,6 +6,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.media.AudioAttributes
+import android.media.AudioManager
 import android.content.pm.ServiceInfo
 import android.content.Context
 import android.content.Intent
@@ -152,17 +154,50 @@ class OverlayService : Service() {
         val pattern = longArrayOf(0, 700, 300, 700, 300, 700)
         Log.i(tag, "Vibration attempt started")
         try {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val reminderChannel = nm.getNotificationChannel(TaskPulseApp.CHANNEL_REMINDERS)
+            val interruptionFilter = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                nm.currentInterruptionFilter.toString()
+            } else {
+                "unsupported"
+            }
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-                vm.defaultVibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                val vibrator = vm.defaultVibrator
+                Log.i(
+                    tag,
+                    "Vibration context: hasVibrator=${vibrator.hasVibrator()}, " +
+                        "ringerMode=${audioManager.ringerMode}, interruptionFilter=$interruptionFilter, " +
+                        "channelExists=${reminderChannel != null}, " +
+                        "channelShouldVibrate=${reminderChannel?.shouldVibrate()}"
+                )
+                vibrator.vibrate(
+                    VibrationEffect.createWaveform(pattern, -1),
+                    VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM)
+                )
             } else {
                 @Suppress("DEPRECATION")
-                val vm = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                Log.i(
+                    tag,
+                    "Vibration context: hasVibrator=${vibrator.hasVibrator()}, " +
+                        "ringerMode=${audioManager.ringerMode}, interruptionFilter=$interruptionFilter, " +
+                        "channelExists=${reminderChannel != null}, " +
+                        "channelShouldVibrate=${reminderChannel?.shouldVibrate()}"
+                )
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vm.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                    vibrator.vibrate(
+                        VibrationEffect.createWaveform(pattern, -1),
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
                 } else {
                     @Suppress("DEPRECATION")
-                    vm.vibrate(pattern, -1)
+                    vibrator.vibrate(pattern, -1)
                 }
             }
             Log.i(tag, "Vibration started successfully")
