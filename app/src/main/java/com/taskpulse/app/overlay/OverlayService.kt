@@ -67,9 +67,26 @@ class OverlayService : Service() {
             "Service started: taskId=$taskId, showOverlay=$showOverlay, vibrate=$vibrate"
         )
 
-        startForegroundWithNotification(taskId, title, desc)
+        try {
+            Log.i(tag, "Entering startForegroundWithNotification: taskId=$taskId")
+            startForegroundWithNotification(taskId, title, desc)
+            Log.i(tag, "startForegroundWithNotification succeeded: taskId=$taskId")
+        } catch (e: Exception) {
+            Log.e(
+                tag,
+                "startForegroundWithNotification failed: taskId=$taskId, " +
+                    "exception=${e.javaClass.simpleName}, message=${e.message}",
+                e
+            )
+            Log.w(tag, "Triggering notification fallback after foreground start failure: taskId=$taskId")
+            launchAlertFallback(taskId, title, desc)
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
+        Log.i(tag, "Before vibration stage: taskId=$taskId, vibrate=$vibrate")
         if (vibrate) doVibrate()
+        Log.i(tag, "After vibration stage: taskId=$taskId, vibrate=$vibrate")
         playRingtone()
 
         if (showOverlay) showOverlay(taskId, title, desc)
@@ -231,10 +248,13 @@ class OverlayService : Service() {
 
         overlayView = view
         try {
+            Log.i(tag, "Before overlay addView: taskId=$taskId")
             windowManager.addView(view, params)
             Log.i(tag, "Overlay addView success: taskId=$taskId")
+            Log.i(tag, "After overlay addView success: taskId=$taskId")
         } catch (e: Exception) {
             Log.e(tag, "Overlay addView failed: taskId=$taskId", e)
+            Log.w(tag, "Before fallback notification post: taskId=$taskId")
             launchAlertFallback(taskId, title, desc)
             dismiss()
         }
@@ -242,6 +262,7 @@ class OverlayService : Service() {
 
     private fun launchAlertFallback(taskId: Long, title: String, desc: String) {
         Log.w(tag, "Launching alert fallback: taskId=$taskId")
+        Log.w(tag, "Before fallback notification post: taskId=$taskId")
 
         val fullScreenIntent = Intent(this, AlertActivity::class.java).apply {
             addFlags(
