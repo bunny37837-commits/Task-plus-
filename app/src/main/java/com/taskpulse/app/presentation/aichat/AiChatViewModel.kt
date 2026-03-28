@@ -36,7 +36,11 @@ class AiChatViewModel @Inject constructor(
     val uiState: StateFlow<AiChatUiState> = _uiState.asStateFlow()
 
     fun setMessage(text: String) {
-        _uiState.update { it.copy(message = text, error = null) }
+        _uiState.update { it.copy(message = text, error = null, feedback = null) }
+    }
+
+    fun setError(message: String) {
+        _uiState.update { it.copy(error = message, feedback = null) }
     }
 
     fun parseMessage() = viewModelScope.launch {
