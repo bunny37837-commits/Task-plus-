@@ -14,7 +14,12 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE date(scheduledDateTime) = :date ORDER BY scheduledDateTime ASC")
     fun getTasksForDate(date: String): Flow<List<TaskEntity>>
 
-    @Query("SELECT * FROM tasks WHERE scheduledDateTime >= :now AND status = 'PENDING' ORDER BY scheduledDateTime ASC")
+    @Query(
+        "SELECT * FROM tasks " +
+            "WHERE COALESCE(snoozedUntil, scheduledDateTime) >= :now " +
+            "AND status IN ('PENDING', 'SNOOZED') " +
+            "ORDER BY COALESCE(snoozedUntil, scheduledDateTime) ASC"
+    )
     fun getUpcomingTasks(now: String): Flow<List<TaskEntity>>
 
     @Query("SELECT * FROM tasks WHERE status = :status")

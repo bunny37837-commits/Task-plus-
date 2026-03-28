@@ -2,6 +2,7 @@ package com.taskpulse.app.alert
 
 import android.app.Activity
 import android.app.KeyguardManager
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.taskpulse.app.worker.TaskAlarmReceiver
 
 class AlertActivity : ComponentActivity() {
     private val tag = "AlertActivity"
@@ -54,7 +56,17 @@ class AlertActivity : ComponentActivity() {
                 AlertScreen(
                     title = title,
                     desc = desc,
-                    onDismiss = { finish() }
+                    onDismiss = {
+                        if (taskId > 0L) {
+                            sendBroadcast(
+                                Intent(this@AlertActivity, TaskAlarmReceiver::class.java).apply {
+                                    action = TaskAlarmReceiver.ACTION_DISMISS
+                                    putExtra("TASK_ID", taskId)
+                                }
+                            )
+                        }
+                        finish()
+                    }
                 )
             }
         }

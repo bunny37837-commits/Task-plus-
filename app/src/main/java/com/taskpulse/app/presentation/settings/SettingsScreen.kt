@@ -14,12 +14,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -44,6 +48,7 @@ data class SettingsState(
     val showOverlayDefault: Boolean = true,
     val autoRescheduleMissed: Boolean = false,
     val geminiApiKeyInput: String = "",
+    val hasGeminiApiKey: Boolean = false,
     val apiSaveMessage: String? = null,
 )
 
@@ -57,16 +62,39 @@ class SettingsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             appDataStore.geminiApiKeyFlow.collect { key ->
-                _state.update { it.copy(geminiApiKeyInput = key) }
+                _state.update { it.copy(geminiApiKeyInput = key, hasGeminiApiKey = key.isNotBlank()) }
+            }
+        }
+        viewModelScope.launch {
+            appDataStore.defaultVibrateFlow.collect { value ->
+                _state.update { it.copy(vibrateDefault = value) }
+            }
+        }
+        viewModelScope.launch {
+            appDataStore.defaultShowOverlayFlow.collect { value ->
+                _state.update { it.copy(showOverlayDefault = value) }
+            }
+        }
+        viewModelScope.launch {
+            appDataStore.autoRescheduleMissedFlow.collect { value ->
+                _state.update { it.copy(autoRescheduleMissed = value) }
             }
         }
     }
 
     fun setDarkTheme(v: Boolean) = _state.update { it.copy(darkTheme = v) }
-    fun setVibrateDefault(v: Boolean) = _state.update { it.copy(vibrateDefault = v) }
-    fun setShowOverlayDefault(v: Boolean) = _state.update { it.copy(showOverlayDefault = v) }
-    fun setAutoReschedule(v: Boolean) = _state.update { it.copy(autoRescheduleMissed = v) }
-    fun setGeminiApiKeyInput(v: String) = _state.update { it.copy(geminiApiKeyInput = v, apiSaveMessage = null) }
+    fun setVibrateDefault(v: Boolean) = viewModelScope.launch {
+        appDataStore.setDefaultVibrate(v)
+    }
+    fun setShowOverlayDefault(v: Boolean) = viewModelScope.launch {
+        appDataStore.setDefaultShowOverlay(v)
+    }
+    fun setAutoReschedule(v: Boolean) = viewModelScope.launch {
+        appDataStore.setAutoRescheduleMissed(v)
+    }
+    fun setGeminiApiKeyInput(v: String) = _state.update {
+        it.copy(geminiApiKeyInput = v, hasGeminiApiKey = v.isNotBlank(), apiSaveMessage = null)
+    }
 
     fun saveGeminiApiKey() = viewModelScope.launch {
         appDataStore.setGeminiApiKey(_state.value.geminiApiKeyInput)
@@ -166,10 +194,18 @@ fun SettingsScreen(
             }
 
             SettingsSection("AI (Gemini)") {
+                var revealApiKey by remember { mutableStateOf(false) }
+
                 Text(
-                    "Paste your Gemini API key (stored locally on this device)",
+                    "Gemini is used by Chat to Schedule. Add your key below (saved locally on this device).",
                     fontSize = 12.sp,
                     color = TextSecondary,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    if (state.hasGeminiApiKey) "Status: API key saved" else "Status: No API key saved",
+                    fontSize = 12.sp,
+                    color = if (state.hasGeminiApiKey) Success else Danger,
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
@@ -178,6 +214,16 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     placeholder = { Text("AIza...") },
+                    label = { Text("Gemini API key") },
+                    visualTransformation = if (revealApiKey) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { revealApiKey = !revealApiKey }) {
+                            Icon(
+                                imageVector = if (revealApiKey) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = if (revealApiKey) "Hide API key" else "Show API key",
+                            )
+                        }
+                    },
                 )
                 Spacer(Modifier.height(8.dp))
                 SettingsActionButton("Save Gemini API key") {

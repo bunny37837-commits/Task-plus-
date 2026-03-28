@@ -26,7 +26,11 @@ class GeminiAiTaskParser @Inject constructor(
     override suspend fun parse(message: String): Result<TaskDraft> {
         val manualKey = appDataStore.getGeminiApiKey()
         val apiKey = if (manualKey.isNotBlank()) manualKey else BuildConfig.GEMINI_API_KEY
-        if (apiKey.isBlank()) return fallback.parse(message)
+        if (apiKey.isBlank()) {
+            return Result.failure(
+                AiConfigurationException("Gemini API key is missing. Open Settings → AI (Gemini), paste your key, then try again.")
+            )
+        }
 
         return runCatching {
             val json = requestGemini(message, apiKey)

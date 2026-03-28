@@ -34,6 +34,8 @@ import com.taskpulse.app.alert.AlertActivity
 import com.taskpulse.app.domain.usecase.CompleteTaskUseCase
 import com.taskpulse.app.domain.usecase.SnoozeTaskUseCase
 import com.taskpulse.app.worker.ExactAlarmScheduler
+import com.taskpulse.app.worker.AlarmRequestCode
+import com.taskpulse.app.worker.TaskAlarmReceiver
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import javax.inject.Inject
@@ -99,7 +101,7 @@ class OverlayService : Service() {
         // Auto-dismiss after 2 minutes
         autoDismissJob = serviceScope.launch {
             delay(120_000)
-            dismiss()
+            dismiss(taskId)
         }
 
         return START_NOT_STICKY
@@ -124,8 +126,10 @@ class OverlayService : Service() {
     }
 
     private fun startForegroundWithNotification(taskId: Long, title: String, desc: String) {
+        val requestCode = AlarmRequestCode.taskRequestCode(taskId)
         val tapIntent = PendingIntent.getActivity(
-            this, 0,
+            this,
+            requestCode,
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -136,16 +140,15 @@ class OverlayService : Service() {
             .setContentIntent(tapIntent)
             .setOngoing(true)
             .build()
-        val notificationId = taskId.toInt().coerceAtLeast(1)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             ServiceCompat.startForeground(
                 this,
-                notificationId,
+                requestCode,
                 notif,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
             )
         } else {
-            startForeground(notificationId, notif)
+            startForeground(requestCode, notif)
         }
         Log.i(tag, "Foreground notification started: taskId=$taskId")
     }
@@ -287,7 +290,7 @@ class OverlayService : Service() {
                             try {
                                 snoozeTaskUseCase(taskId, minutes)
                             } finally {
-                                dismiss()
+                                dismiss(taskId)
                             }
                         }
                     },
@@ -296,7 +299,7 @@ class OverlayService : Service() {
                             try {
                                 completeTaskUseCase(taskId)
                             } finally {
-                                dismiss()
+                                dismiss(taskId)
                             }
                         }
                     }
@@ -314,7 +317,7 @@ class OverlayService : Service() {
             Log.e(tag, "Overlay addView failed: taskId=$taskId", e)
             Log.w(tag, "Before fallback notification post: taskId=$taskId")
             launchAlertFallback(taskId, title, desc)
-            dismiss()
+            dismiss(taskId)
         }
     }
 
@@ -333,12 +336,47 @@ class OverlayService : Service() {
             putExtra("TASK_DESC", desc)
         }
 
+        val requestCode = AlarmRequestCode.taskRequestCode(taskId)
+
         val fullScreenPendingIntent = PendingIntent.getActivity(
             this,
-            taskId.toInt().coerceAtLeast(1),
+            requestCode,
             fullScreenIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             fullScreenPendingIntentOptions()
+        )
+
+        val completeIntent = Intent(this, TaskAlarmReceiver::class.java).apply {
+            action = TaskAlarmReceiver.ACTION_COMPLETE
+            putExtra("TASK_ID", taskId)
+        }
+        val snoozeIntent = Intent(this, TaskAlarmReceiver::class.java).apply {
+            action = TaskAlarmReceiver.ACTION_SNOOZE
+            putExtra("TASK_ID", taskId)
+            putExtra("SNOOZE_MINUTES", TaskAlarmReceiver.DEFAULT_SNOOZE_MINUTES)
+        }
+        val dismissIntent = Intent(this, TaskAlarmReceiver::class.java).apply {
+            action = TaskAlarmReceiver.ACTION_DISMISS
+            putExtra("TASK_ID", taskId)
+        }
+
+        val completePendingIntent = PendingIntent.getBroadcast(
+            this,
+            requestCode xor 0x1A2B,
+            completeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val snoozePendingIntent = PendingIntent.getBroadcast(
+            this,
+            requestCode xor 0x2B3C,
+            snoozeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            this,
+            requestCode xor 0x3C4D,
+            dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val canUseFullScreenIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -360,8 +398,11 @@ class OverlayService : Service() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(fullScreenPendingIntent)
-            .setAutoCancel(false)
-            .setOngoing(true)
+            .setDeleteIntent(dismissPendingIntent)
+            .setAutoCancel(true)
+            .setOngoing(false)
+            .addAction(0, "Complete", completePendingIntent)
+            .addAction(0, "Snooze ${TaskAlarmReceiver.DEFAULT_SNOOZE_MINUTES}m", snoozePendingIntent)
             .apply {
                 if (canUseFullScreenIntent) {
                     setFullScreenIntent(fullScreenPendingIntent, true)
@@ -370,7 +411,7 @@ class OverlayService : Service() {
             .build()
 
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        nm.notify(taskId.toInt().coerceAtLeast(1), notification)
+        nm.notify(requestCode, notification)
         Log.i(
             tag,
             "Alert fallback notification posted: taskId=$taskId, fullScreen=$canUseFullScreenIntent"
@@ -386,15 +427,22 @@ class OverlayService : Service() {
             }
         }.toBundle()
 
-    private fun dismiss() {
+    private fun dismiss(taskId: Long) {
         autoDismissJob?.cancel()
         stopRingtone()
+        cancelNotification(taskId)
         overlayView?.let {
             try { windowManager.removeView(it) } catch (_: Exception) {}
         }
         overlayView = null
-        Log.i(tag, "Service dismiss called")
+        Log.i(tag, "Service dismiss called: taskId=$taskId")
         stopSelf()
+    }
+
+    private fun cancelNotification(taskId: Long) {
+        if (taskId <= 0L) return
+        val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        nm.cancel(AlarmRequestCode.taskRequestCode(taskId))
     }
 
     override fun onDestroy() {
