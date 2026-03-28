@@ -29,13 +29,15 @@ class MissedTasksWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         return try {
             val now = LocalDateTime.now()
+            val graceSeconds = 30L
+            val overdueCutoff = now.minusSeconds(graceSeconds)
             val autoReschedule = appDataStore.shouldAutoRescheduleMissed()
             val tasks = getAllTasksUseCase().first()
             val overdue = tasks.filter { task ->
                 task.status == TaskStatus.PENDING || task.status == TaskStatus.SNOOZED
             }.filter { task ->
                 val triggerAt = task.snoozedUntil ?: task.scheduledDateTime
-                !triggerAt.isAfter(now)
+                !triggerAt.isAfter(overdueCutoff)
             }
 
             var markedMissed = 0

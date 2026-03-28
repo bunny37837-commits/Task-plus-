@@ -157,6 +157,11 @@ class TaskAlarmReceiver : BroadcastReceiver() {
             putExtra("SNOOZE_MINUTES", DEFAULT_SNOOZE_MINUTES)
         }
 
+        val dismissIntent = Intent(context, TaskAlarmReceiver::class.java).apply {
+            action = ACTION_DISMISS
+            putExtra("TASK_ID", taskId)
+        }
+
         val completePendingIntent = PendingIntent.getBroadcast(
             context,
             requestCode xor 0x1A2B,
@@ -169,6 +174,12 @@ class TaskAlarmReceiver : BroadcastReceiver() {
             snoozeIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode xor 0x3C4D,
+            dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         val builder = NotificationCompat.Builder(context, TaskPulseApp.CHANNEL_REMINDERS)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
@@ -177,9 +188,10 @@ class TaskAlarmReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setAutoCancel(false)
-            .setOngoing(true)
+            .setAutoCancel(true)
+            .setOngoing(false)
             .setContentIntent(fullScreenPendingIntent)
+            .setDeleteIntent(dismissPendingIntent)
             .addAction(0, "Complete", completePendingIntent)
             .addAction(0, "Snooze ${DEFAULT_SNOOZE_MINUTES}m", snoozePendingIntent)
 

@@ -118,22 +118,33 @@ class AddTaskViewModel @Inject constructor(
         }
         _state.update { it.copy(isLoading = true) }
         try {
-            val task = Task(
-                id = editingTaskId ?: 0L,
-                title = s.title.trim(),
-                description = s.description.trim(),
-                category = s.selectedCategory,
-                priority = s.priority,
-                scheduledDateTime = scheduledDt,
-                recurrence = s.recurrence,
-                vibrate = s.vibrate,
-                showOverlay = s.showOverlay,
-            )
             val finalTask = if (editingTaskId != null) {
-                updateTaskUseCase(task)
+                val existing = getTaskByIdUseCase(editingTaskId!!)
+                val updatedTask = (existing ?: Task(id = editingTaskId!!, title = s.title.trim(), scheduledDateTime = scheduledDt)).copy(
+                    title = s.title.trim(),
+                    description = s.description.trim(),
+                    category = s.selectedCategory,
+                    priority = s.priority,
+                    scheduledDateTime = scheduledDt,
+                    recurrence = s.recurrence,
+                    vibrate = s.vibrate,
+                    showOverlay = s.showOverlay,
+                )
+                updateTaskUseCase(updatedTask)
                 alarmScheduler.cancel(editingTaskId!!)
-                task
+                updatedTask
             } else {
+                val task = Task(
+                    id = 0L,
+                    title = s.title.trim(),
+                    description = s.description.trim(),
+                    category = s.selectedCategory,
+                    priority = s.priority,
+                    scheduledDateTime = scheduledDt,
+                    recurrence = s.recurrence,
+                    vibrate = s.vibrate,
+                    showOverlay = s.showOverlay,
+                )
                 val newId = createTaskUseCase(task)
                 task.copy(id = newId)
             }
