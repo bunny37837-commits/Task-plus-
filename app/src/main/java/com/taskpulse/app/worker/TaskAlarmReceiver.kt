@@ -32,6 +32,7 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         when (intent.action) {
             ACTION_COMPLETE -> handleCompleteAction(context, intent)
             ACTION_SNOOZE -> handleSnoozeAction(context, intent)
+            ACTION_DISMISS -> handleDismissAction(context, intent)
             ACTION_TASK_ALARM -> handleAlarm(context, intent)
             else -> Log.w(tag, "Ignoring unexpected action: action=${intent.action}")
         }
@@ -246,6 +247,13 @@ class TaskAlarmReceiver : BroadcastReceiver() {
         }
     }
 
+    private fun handleDismissAction(context: Context, intent: Intent) {
+        val taskId = intent.getLongExtra("TASK_ID", -1L)
+        if (taskId <= 0L) return
+        cancelNotification(context, taskId)
+        Log.i(tag, "Notification dismissed: taskId=$taskId")
+    }
+
     private fun cancelNotification(context: Context, taskId: Long) {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.cancel(taskRequestCode(taskId))
@@ -269,8 +277,9 @@ class TaskAlarmReceiver : BroadcastReceiver() {
 
     companion object {
         private const val ACTION_TASK_ALARM = "com.taskpulse.TASK_ALARM"
-        private const val ACTION_COMPLETE = "com.taskpulse.ACTION_COMPLETE_TASK"
-        private const val ACTION_SNOOZE = "com.taskpulse.ACTION_SNOOZE_TASK"
-        private const val DEFAULT_SNOOZE_MINUTES = 10
+        const val ACTION_COMPLETE = "com.taskpulse.ACTION_COMPLETE_TASK"
+        const val ACTION_SNOOZE = "com.taskpulse.ACTION_SNOOZE_TASK"
+        const val ACTION_DISMISS = "com.taskpulse.ACTION_DISMISS_TASK_NOTIFICATION"
+        const val DEFAULT_SNOOZE_MINUTES = 10
     }
 }
