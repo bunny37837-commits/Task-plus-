@@ -24,7 +24,10 @@ class RescheduleTasksWorker @AssistedInject constructor(
         return try {
             val now = LocalDateTime.now()
             val tasks = getPendingTasksUseCase().first() // ✅ sirf ek baar read
-            val futureTasks = tasks.filter { it.scheduledDateTime.isAfter(now) }
+            val futureTasks = tasks.filter {
+                val triggerAt = it.snoozedUntil ?: it.scheduledDateTime
+                triggerAt.isAfter(now)
+            }
             Log.i(
                 tag,
                 "Reschedule started: totalPending=${tasks.size}, futurePending=${futureTasks.size}"

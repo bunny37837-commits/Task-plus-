@@ -66,7 +66,9 @@ class ExactAlarmScheduler @Inject constructor(
             }
 
             val pendingIntent = PendingIntent.getBroadcast(
-                context, task.id.toInt(), intent,
+                context,
+                taskRequestCode(task.id),
+                intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
 
@@ -87,7 +89,9 @@ class ExactAlarmScheduler @Inject constructor(
                 action = "com.taskpulse.TASK_ALARM"
             }
             val pi = PendingIntent.getBroadcast(
-                context, taskId.toInt(), intent,
+                context,
+                taskRequestCode(taskId),
+                intent,
                 PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
             ) ?: return
             alarmManager.cancel(pi)

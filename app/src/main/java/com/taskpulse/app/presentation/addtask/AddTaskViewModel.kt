@@ -3,6 +3,7 @@ package com.taskpulse.app.presentation.addtask
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.taskpulse.app.data.datastore.AppDataStore
 import com.taskpulse.app.domain.model.*
 import com.taskpulse.app.domain.usecase.*
 import com.taskpulse.app.worker.ExactAlarmScheduler
@@ -37,6 +38,7 @@ class AddTaskViewModel @Inject constructor(
     private val getTaskByIdUseCase: GetTaskByIdUseCase,
     private val categoryRepository: com.taskpulse.app.domain.repository.CategoryRepository,
     private val alarmScheduler: ExactAlarmScheduler,
+    private val appDataStore: AppDataStore,
 ) : ViewModel() {
     private val tag = "AddTaskViewModel"
 
@@ -46,11 +48,31 @@ class AddTaskViewModel @Inject constructor(
     val uiState: StateFlow<AddTaskUiState> = state
     private var editingTaskId: Long? = null
 
-    init { loadCategories() }
+    init {
+        loadCategories()
+        loadReminderDefaults()
+    }
 
     private fun loadCategories() = viewModelScope.launch {
         categoryRepository.getAllCategories().collect { cats ->
             _state.update { it.copy(categories = cats) }
+        }
+    }
+
+    private fun loadReminderDefaults() {
+        viewModelScope.launch {
+            appDataStore.defaultVibrateFlow.collect { defaultVibrate ->
+                if (editingTaskId == null) {
+                    _state.update { it.copy(vibrate = defaultVibrate) }
+                }
+            }
+        }
+        viewModelScope.launch {
+            appDataStore.defaultShowOverlayFlow.collect { defaultOverlay ->
+                if (editingTaskId == null) {
+                    _state.update { it.copy(showOverlay = defaultOverlay) }
+                }
+            }
         }
     }
 
@@ -96,22 +118,33 @@ class AddTaskViewModel @Inject constructor(
         }
         _state.update { it.copy(isLoading = true) }
         try {
-            val task = Task(
-                id = editingTaskId ?: 0L,
-                title = s.title.trim(),
-                description = s.description.trim(),
-                category = s.selectedCategory,
-                priority = s.priority,
-                scheduledDateTime = scheduledDt,
-                recurrence = s.recurrence,
-                vibrate = s.vibrate,
-                showOverlay = s.showOverlay,
-            )
             val finalTask = if (editingTaskId != null) {
-                updateTaskUseCase(task)
+                val existing = getTaskByIdUseCase(editingTaskId!!)
+                val updatedTask = (existing ?: Task(id = editingTaskId!!, title = s.title.trim(), scheduledDateTime = scheduledDt)).copy(
+                    title = s.title.trim(),
+                    description = s.description.trim(),
+                    category = s.selectedCategory,
+                    priority = s.priority,
+                    scheduledDateTime = scheduledDt,
+                    recurrence = s.recurrence,
+                    vibrate = s.vibrate,
+                    showOverlay = s.showOverlay,
+                )
+                updateTaskUseCase(updatedTask)
                 alarmScheduler.cancel(editingTaskId!!)
-                task
+                updatedTask
             } else {
+                val task = Task(
+                    id = 0L,
+                    title = s.title.trim(),
+                    description = s.description.trim(),
+                    category = s.selectedCategory,
+                    priority = s.priority,
+                    scheduledDateTime = scheduledDt,
+                    recurrence = s.recurrence,
+                    vibrate = s.vibrate,
+                    showOverlay = s.showOverlay,
+                )
                 val newId = createTaskUseCase(task)
                 task.copy(id = newId)
             }

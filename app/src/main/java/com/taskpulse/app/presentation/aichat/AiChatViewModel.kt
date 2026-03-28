@@ -2,6 +2,7 @@ package com.taskpulse.app.presentation.aichat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.taskpulse.app.ai.AiConfigurationException
 import com.taskpulse.app.ai.AiTaskParser
 import com.taskpulse.app.ai.TaskDraft
 import com.taskpulse.app.domain.model.Task
@@ -35,7 +36,11 @@ class AiChatViewModel @Inject constructor(
     val uiState: StateFlow<AiChatUiState> = _uiState.asStateFlow()
 
     fun setMessage(text: String) {
-        _uiState.update { it.copy(message = text, error = null) }
+        _uiState.update { it.copy(message = text, error = null, feedback = null) }
+    }
+
+    fun setError(message: String) {
+        _uiState.update { it.copy(error = message, feedback = null) }
     }
 
     fun parseMessage() = viewModelScope.launch {
@@ -57,8 +62,12 @@ class AiChatViewModel @Inject constructor(
                 }
             }
             .onFailure { e ->
+                val message = when (e) {
+                    is AiConfigurationException -> e.message
+                    else -> e.message ?: "Could not understand request"
+                }
                 _uiState.update {
-                    it.copy(isLoading = false, error = e.message ?: "Could not understand request")
+                    it.copy(isLoading = false, error = message)
                 }
             }
     }
@@ -95,14 +104,22 @@ class AiChatViewModel @Inject constructor(
                 priority = draft.priority,
                 recurrence = draft.recurrence,
             )
-            if (alarmScheduler.hasExactAlarmPermission()) {
+            val scheduled = if (alarmScheduler.hasExactAlarmPermission()) {
                 alarmScheduler.schedule(finalTask)
+                true
+            } else {
+                false
             }
-        }.onSuccess {
+            scheduled
+        }.onSuccess { scheduled ->
             _uiState.update {
                 it.copy(
                     isLoading = false,
-                    feedback = "Task created and reminder scheduled.",
+                    feedback = if (scheduled) {
+                        "Task created and reminder scheduled."
+                    } else {
+                        "Task created, but reminder not scheduled. Enable Exact Alarms in Settings."
+                    },
                     draft = null,
                     message = "",
                 )

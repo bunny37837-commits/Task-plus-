@@ -24,7 +24,14 @@ class BootReceiver : BroadcastReceiver() {
                     .setInitialDelay(5, java.util.concurrent.TimeUnit.SECONDS)
                     .build()
             )
-            Log.i(tag, "Reschedule work enqueued")
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "update_missed_tasks",
+                ExistingWorkPolicy.REPLACE,
+                OneTimeWorkRequestBuilder<MissedTasksWorker>()
+                    .setInitialDelay(8, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+            )
+            Log.i(tag, "Reschedule + missed-task work enqueued")
         }
     }
 }
