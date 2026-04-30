@@ -66,6 +66,11 @@ class SettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            appDataStore.darkThemeFlow.collect { value ->
+                _state.update { it.copy(darkTheme = value) }
+            }
+        }
+        viewModelScope.launch {
             appDataStore.defaultVibrateFlow.collect { value ->
                 _state.update { it.copy(vibrateDefault = value) }
             }
@@ -82,7 +87,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setDarkTheme(v: Boolean) = _state.update { it.copy(darkTheme = v) }
+    fun setDarkTheme(v: Boolean) = viewModelScope.launch {
+        appDataStore.setDarkTheme(v)
+    }
     fun setVibrateDefault(v: Boolean) = viewModelScope.launch {
         appDataStore.setDefaultVibrate(v)
     }
@@ -197,15 +204,15 @@ fun SettingsScreen(
                 var revealApiKey by remember { mutableStateOf(false) }
 
                 Text(
-                    "Gemini is used by Chat to Schedule. Add your key below (saved locally on this device).",
+                    "Gemini improves smart scheduling. Basic parsing works without a key.",
                     fontSize = 12.sp,
                     color = TextSecondary,
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    if (state.hasGeminiApiKey) "Status: API key saved" else "Status: No API key saved",
+                    if (state.hasGeminiApiKey) "Status: API key saved" else "Status: Using local parser",
                     fontSize = 12.sp,
-                    color = if (state.hasGeminiApiKey) Success else Danger,
+                    color = if (state.hasGeminiApiKey) Success else TextSecondary,
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
