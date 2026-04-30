@@ -3,7 +3,6 @@ package com.taskpulse.app.data.local.dao
 import androidx.room.*
 import com.taskpulse.app.data.local.entity.CategoryEntity
 import com.taskpulse.app.data.local.entity.TaskEntity
-import com.taskpulse.app.domain.model.TaskStatus
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -11,8 +10,13 @@ interface TaskDao {
     @Query("SELECT * FROM tasks ORDER BY scheduledDateTime ASC")
     fun getAllTasks(): Flow<List<TaskEntity>>
 
-    @Query("SELECT * FROM tasks WHERE date(scheduledDateTime) = :date ORDER BY scheduledDateTime ASC")
-    fun getTasksForDate(date: String): Flow<List<TaskEntity>>
+    @Query(
+        "SELECT * FROM tasks " +
+            "WHERE scheduledDateTime >= :start " +
+            "AND scheduledDateTime < :end " +
+            "ORDER BY scheduledDateTime ASC"
+    )
+    fun getTasksForDate(start: String, end: String): Flow<List<TaskEntity>>
 
     @Query(
         "SELECT * FROM tasks " +
