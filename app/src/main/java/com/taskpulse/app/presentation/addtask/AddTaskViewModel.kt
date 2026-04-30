@@ -42,7 +42,6 @@ class AddTaskViewModel @Inject constructor(
 ) : ViewModel() {
     private val tag = "AddTaskViewModel"
 
-
     private val _state = MutableStateFlow(AddTaskUiState())
     val state: StateFlow<AddTaskUiState> = _state.asStateFlow()
     val uiState: StateFlow<AddTaskUiState> = state
@@ -116,7 +115,7 @@ class AddTaskViewModel @Inject constructor(
             _state.update { it.copy(error = "Please select a future date and time") }
             return@launch
         }
-        _state.update { it.copy(isLoading = true) }
+        _state.update { it.copy(isLoading = true, error = null) }
         try {
             val finalTask = if (editingTaskId != null) {
                 val existing = getTaskByIdUseCase(editingTaskId!!)
@@ -149,23 +148,15 @@ class AddTaskViewModel @Inject constructor(
                 task.copy(id = newId)
             }
 
-            if (alarmScheduler.hasExactAlarmPermission()) {
-                Log.i(
-                    tag,
-                    "Scheduling reminder: taskId=${finalTask.id}, when=${finalTask.scheduledDateTime}"
-                )
-                alarmScheduler.schedule(finalTask)
+            Log.i(tag, "Scheduling reminder: taskId=${finalTask.id}, when=${finalTask.scheduledDateTime}")
+            val scheduled = alarmScheduler.schedule(finalTask)
+            if (scheduled) {
                 _state.update { it.copy(isLoading = false, saved = true) }
             } else {
-                Log.w(
-                    tag,
-                    "Exact alarm permission missing, reminder not scheduled: " +
-                        "taskId=${finalTask.id}, when=${finalTask.scheduledDateTime}"
-                )
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        error = "Reminder ke liye → Settings → Apps → Special app access → Alarms & reminders ON karo"
+                        error = "Task saved, but the reminder could not be scheduled. Enable Alarms & reminders in Android Settings and try again."
                     )
                 }
             }
