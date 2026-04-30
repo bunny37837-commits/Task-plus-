@@ -23,12 +23,17 @@ class AppDataStore @Inject constructor(
 ) {
     private val SEEDED_KEY = booleanPreferencesKey("categories_seeded")
     private val GEMINI_API_KEY = stringPreferencesKey("gemini_api_key")
+    private val DARK_THEME = booleanPreferencesKey("dark_theme")
     private val DEFAULT_VIBRATE = booleanPreferencesKey("default_vibrate")
     private val DEFAULT_SHOW_OVERLAY = booleanPreferencesKey("default_show_overlay")
     private val AUTO_RESCHEDULE_MISSED = booleanPreferencesKey("auto_reschedule_missed")
 
     val geminiApiKeyFlow: Flow<String> = context.dataStore.data.map { prefs ->
         prefs[GEMINI_API_KEY].orEmpty()
+    }
+
+    val darkThemeFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[DARK_THEME] ?: true
     }
 
     val defaultVibrateFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -47,6 +52,10 @@ class AppDataStore @Inject constructor(
 
     suspend fun setGeminiApiKey(value: String) {
         context.dataStore.edit { prefs -> prefs[GEMINI_API_KEY] = value.trim() }
+    }
+
+    suspend fun setDarkTheme(value: Boolean) {
+        context.dataStore.edit { it[DARK_THEME] = value }
     }
 
     suspend fun setDefaultVibrate(value: Boolean) {
