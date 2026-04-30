@@ -27,6 +27,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.taskpulse.app.domain.model.Task
+import com.taskpulse.app.domain.usecase.CompleteTaskUseCase
+import com.taskpulse.app.domain.usecase.DeleteTaskUseCase
 import com.taskpulse.app.domain.usecase.GetTasksForDateUseCase
 import com.taskpulse.app.presentation.components.TaskCard
 import com.taskpulse.app.presentation.ui.theme.*
@@ -38,11 +40,11 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
-// ─── ViewModel ─────────────────────────────────────────────────────────────
-
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
     private val getTasksForDateUseCase: GetTasksForDateUseCase,
+    private val completeTaskUseCase: CompleteTaskUseCase,
+    private val deleteTaskUseCase: DeleteTaskUseCase,
 ) : ViewModel() {
 
     private val _selectedDate = MutableStateFlow(LocalDate.now())
@@ -58,9 +60,15 @@ class CalendarViewModel @Inject constructor(
     fun selectDate(date: LocalDate) { _selectedDate.value = date }
     fun nextMonth() { _currentMonth.update { it.plusMonths(1) } }
     fun prevMonth() { _currentMonth.update { it.minusMonths(1) } }
-}
 
-// ─── Screen ─────────────────────────────────────────────────────────────────
+    fun completeTask(task: Task) = viewModelScope.launch {
+        completeTaskUseCase(task.id)
+    }
+
+    fun deleteTask(task: Task) = viewModelScope.launch {
+        deleteTaskUseCase(task)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,7 +89,6 @@ fun CalendarScreen(
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
-        // Top bar
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -99,7 +106,6 @@ fun CalendarScreen(
             }
         }
 
-        // Month navigation
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -120,7 +126,6 @@ fun CalendarScreen(
 
         Spacer(Modifier.height(8.dp))
 
-        // Day headers
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             listOf("Mo","Tu","We","Th","Fr","Sa","Su").forEach { day ->
                 Text(
@@ -134,9 +139,8 @@ fun CalendarScreen(
         }
         Spacer(Modifier.height(4.dp))
 
-        // Calendar grid
         val firstDay = currentMonth.atDay(1)
-        val startOffset = (firstDay.dayOfWeek.value - 1) // Mon=0
+        val startOffset = (firstDay.dayOfWeek.value - 1)
         val daysInMonth = currentMonth.lengthOfMonth()
 
         val weeks = ((startOffset + daysInMonth + 6) / 7)
@@ -160,7 +164,6 @@ fun CalendarScreen(
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = BorderColor)
 
-        // Task list for selected day
         Text(
             text = selectedDate.format(DateTimeFormatter.ofPattern("EEEE, MMMM d")),
             style = MaterialTheme.typography.titleMedium,
@@ -179,7 +182,12 @@ fun CalendarScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 items(tasks, key = { it.id }) { task ->
-                    TaskCard(task = task, onComplete = {}, onDelete = {}, onClick = { onTaskDetail(task.id) })
+                    TaskCard(
+                        task = task,
+                        onComplete = { viewModel.completeTask(task) },
+                        onDelete = { viewModel.deleteTask(task) },
+                        onClick = { onTaskDetail(task.id) }
+                    )
                 }
                 item { Spacer(Modifier.height(16.dp)) }
             }
