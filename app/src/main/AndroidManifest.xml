@@ -21,7 +21,7 @@
         android:name=".TaskPulseApp"
         android:allowBackup="false"
         android:hardwareAccelerated="true"
-        android:label="TaskPulse"
+        android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -40,8 +40,6 @@
         <activity
             android:name=".overlay.OverlayActivity"
             android:exported="false"
-            
-            
             android:excludeFromRecents="true"
             android:launchMode="singleInstance" />
 
@@ -84,13 +82,10 @@
                 android:value="androidx.startup" />
         </provider>
 
-    
         <activity
             android:name=".alert.AlertActivity"
             android:exported="false"
-            android:excludeFromRecents="true"
-            
-             />
+            android:excludeFromRecents="true" />
 
     </application>
 
