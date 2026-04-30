@@ -69,7 +69,6 @@ class TaskRepositoryImpl @Inject constructor(
 ) : TaskRepository {
 
     private val dtFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
-    private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
     private suspend fun resolveCategory(id: Long?) = id?.let { categoryDao.getCategoryById(it)?.toDomain() }
 
@@ -78,10 +77,13 @@ class TaskRepositoryImpl @Inject constructor(
             list.map { it.toDomain(resolveCategory(it.categoryId)) }
         }
 
-    override fun getTasksForDate(date: LocalDate): Flow<List<Task>> =
-        taskDao.getTasksForDate(date.format(dateFormatter)).map { list ->
+    override fun getTasksForDate(date: LocalDate): Flow<List<Task>> {
+        val start = date.atStartOfDay().format(dtFormatter)
+        val end = date.plusDays(1).atStartOfDay().format(dtFormatter)
+        return taskDao.getTasksForDate(start, end).map { list ->
             list.map { it.toDomain(resolveCategory(it.categoryId)) }
         }
+    }
 
     override fun getUpcomingTasks(): Flow<List<Task>> =
         taskDao.getUpcomingTasks(LocalDateTime.now().format(dtFormatter)).map { list ->
