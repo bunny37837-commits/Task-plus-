@@ -1,6 +1,6 @@
-# TaskPulse 🔔
+# Task Pulse 🔔
 
-A premium Android task reminder app with full-screen overlay reminders (Truecaller-style).
+A focused Android reminder app for reminders you cannot afford to miss.
 
 ## Tech Stack
 - **Kotlin** + **Jetpack Compose** (Material 3)
@@ -14,13 +14,14 @@ A premium Android task reminder app with full-screen overlay reminders (Truecall
 - ✅ Create tasks with date, time, recurrence
 - ✅ Full-screen overlay reminder at exact scheduled time
 - ✅ Works on lock screen
-- ✅ Snooze (5/10/15/30 min / 1hr / 2hr)
+- ✅ Snooze reminders
 - ✅ Priority levels (Low / Medium / High / Critical)
 - ✅ Categories with color tags
 - ✅ Calendar view
 - ✅ Statistics screen
 - ✅ Auto-reschedule on device reboot
 - ✅ Dark theme
+- ✅ Smart scheduling with local parsing; Gemini can improve parsing when configured
 
 ## Setup
 
@@ -35,12 +36,17 @@ Open in **Android Studio Ladybug** or newer.
 ./gradlew assembleDebug
 ```
 
-### 3. Required Permissions (first launch)
-The app will guide you through:
+For release builds:
+```bash
+./gradlew assembleRelease
+```
+
+### 3. Reminder Reliability Permissions
+For best reminder reliability, enable these from the app Settings screen:
 1. **Post Notifications** (Android 13+)
-2. **Display over other apps** → Settings → Apps → TaskPulse → Display over other apps
-3. **Schedule exact alarms** → Settings → Apps → TaskPulse → Alarms & reminders
-4. **Battery optimization** → Ignore battery optimization for best reliability
+2. **Display over other apps** for overlay reminders
+3. **Alarms & reminders** for exact reminder timing
+4. **Battery unrestricted** for better background reliability
 
 ### 4. Testing Overlay on Emulator
 Overlay windows may not work correctly on all emulators.
@@ -62,12 +68,12 @@ app/
 |------|---------|
 | `OverlayService.kt` | Foreground service that shows full-screen reminder |
 | `OverlayScreen.kt` | Compose UI for the overlay popup |
-| `ExactAlarmScheduler.kt` | Schedules exact alarms via AlarmManager |
+| `ExactAlarmScheduler.kt` | Schedules reminder alarms via AlarmManager |
 | `TaskAlarmReceiver.kt` | BroadcastReceiver triggered by alarm |
 | `BootReceiver.kt` | Re-schedules alarms after device reboot |
 
 ## Notes
 - Min SDK: 26 (Android 8.0)
-- Uses `setExactAndAllowWhileIdle` for reliable alarms in doze mode
-- On Android 12+: requests `SCHEDULE_EXACT_ALARM` permission
+- Uses `AlarmManager.setAlarmClock` for high-priority reminder timing
+- On Android 12+: requires exact alarm capability for on-time reminders
 - Font: Plus Jakarta Sans (via Google Fonts)
