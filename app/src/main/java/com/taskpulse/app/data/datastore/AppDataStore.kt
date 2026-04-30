@@ -26,6 +26,7 @@ class AppDataStore @Inject constructor(
     private val DEFAULT_VIBRATE = booleanPreferencesKey("default_vibrate")
     private val DEFAULT_SHOW_OVERLAY = booleanPreferencesKey("default_show_overlay")
     private val AUTO_RESCHEDULE_MISSED = booleanPreferencesKey("auto_reschedule_missed")
+    private val DARK_THEME = booleanPreferencesKey("dark_theme")
 
     val geminiApiKeyFlow: Flow<String> = context.dataStore.data.map { prefs ->
         prefs[GEMINI_API_KEY].orEmpty()
@@ -41,6 +42,10 @@ class AppDataStore @Inject constructor(
 
     val autoRescheduleMissedFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[AUTO_RESCHEDULE_MISSED] ?: false
+    }
+
+    val darkThemeFlow: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[DARK_THEME] ?: true
     }
 
     suspend fun getGeminiApiKey(): String = context.dataStore.data.first()[GEMINI_API_KEY].orEmpty()
@@ -59,6 +64,10 @@ class AppDataStore @Inject constructor(
 
     suspend fun setAutoRescheduleMissed(value: Boolean) {
         context.dataStore.edit { it[AUTO_RESCHEDULE_MISSED] = value }
+    }
+
+    suspend fun setDarkTheme(value: Boolean) {
+        context.dataStore.edit { it[DARK_THEME] = value }
     }
 
     suspend fun shouldAutoRescheduleMissed(): Boolean = autoRescheduleMissedFlow.first()
