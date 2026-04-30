@@ -23,7 +23,7 @@ class ExactAlarmScheduler @Inject constructor(
 
     fun hasExactAlarmPermission(): Boolean {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
-                alarmManager.canScheduleExactAlarms()
+            alarmManager.canScheduleExactAlarms()
     }
 
     fun openExactAlarmSettings() {
@@ -37,12 +37,13 @@ class ExactAlarmScheduler @Inject constructor(
         }
     }
 
-    fun schedule(task: Task) {
+    fun schedule(task: Task): Boolean {
         if (!hasExactAlarmPermission()) {
             Log.w(TAG, "No exact alarm permission for task ${task.id}")
-            return
+            return false
         }
-        try {
+
+        return try {
             val triggerAt = task.snoozedUntil ?: task.scheduledDateTime
             val triggerTime = triggerAt
                 .atZone(ZoneId.systemDefault())
@@ -72,14 +73,14 @@ class ExactAlarmScheduler @Inject constructor(
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
 
-            // setAlarmClock — highest priority, HyperOS/MIUI bypass
-            // System clock icon dikhta hai, Doze ignore karta hai
             val alarmInfo = AlarmManager.AlarmClockInfo(triggerTime, pendingIntent)
             alarmManager.setAlarmClock(alarmInfo, pendingIntent)
 
             Log.i(TAG, "Alarm scheduled successfully: taskId=${task.id}, triggerAt=$triggerTime")
+            true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to schedule alarm: taskId=${task.id}", e)
+            false
         }
     }
 
