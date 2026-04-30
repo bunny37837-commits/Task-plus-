@@ -61,6 +61,11 @@ class SettingsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            appDataStore.darkThemeFlow.collect { value ->
+                _state.update { it.copy(darkTheme = value) }
+            }
+        }
+        viewModelScope.launch {
             appDataStore.geminiApiKeyFlow.collect { key ->
                 _state.update { it.copy(geminiApiKeyInput = key, hasGeminiApiKey = key.isNotBlank()) }
             }
@@ -82,7 +87,9 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setDarkTheme(v: Boolean) = _state.update { it.copy(darkTheme = v) }
+    fun setDarkTheme(v: Boolean) = viewModelScope.launch {
+        appDataStore.setDarkTheme(v)
+    }
     fun setVibrateDefault(v: Boolean) = viewModelScope.launch {
         appDataStore.setDefaultVibrate(v)
     }
@@ -138,16 +145,16 @@ fun SettingsScreen(
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SettingsSection("Permission Center") {
-                PermissionStatusRow("Exact alarms", exactAlarmGranted)
+            SettingsSection("Reminder Reliability") {
+                PermissionStatusRow("On-time reminders", exactAlarmGranted)
                 HorizontalDivider(color = BorderColor)
-                PermissionStatusRow("Notifications", notificationsGranted)
+                PermissionStatusRow("Reminder notifications", notificationsGranted)
                 HorizontalDivider(color = BorderColor)
-                PermissionStatusRow("Overlay / draw over apps", overlayGranted)
+                PermissionStatusRow("Show over other apps", overlayGranted)
                 HorizontalDivider(color = BorderColor)
-                PermissionStatusRow("Full-screen alerts", fullScreenIntentGranted)
+                PermissionStatusRow("Full-screen urgent alerts", fullScreenIntentGranted)
                 HorizontalDivider(color = BorderColor)
-                PermissionStatusRow("Battery unrestricted", batteryIgnored)
+                PermissionStatusRow("Reliable background reminders", batteryIgnored)
             }
 
             SettingsSection("Permission Actions") {
@@ -190,14 +197,14 @@ fun SettingsScreen(
                 HorizontalDivider(color = BorderColor)
                 SettingsToggle("Show overlay by default", state.showOverlayDefault, viewModel::setShowOverlayDefault)
                 HorizontalDivider(color = BorderColor)
-                SettingsToggle("Auto-reschedule missed tasks", state.autoRescheduleMissed, viewModel::setAutoReschedule)
+                SettingsToggle("Reschedule missed repeating reminders", state.autoRescheduleMissed, viewModel::setAutoReschedule)
             }
 
             SettingsSection("AI (Gemini)") {
                 var revealApiKey by remember { mutableStateOf(false) }
 
                 Text(
-                    "Gemini is used by Chat to Schedule. Add your key below (saved locally on this device).",
+                    "Gemini is used by Smart Scheduler. Add your key below (saved locally on this device).",
                     fontSize = 12.sp,
                     color = TextSecondary,
                 )
