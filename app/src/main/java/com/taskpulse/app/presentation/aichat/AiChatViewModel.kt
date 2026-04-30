@@ -104,13 +104,7 @@ class AiChatViewModel @Inject constructor(
                 priority = draft.priority,
                 recurrence = draft.recurrence,
             )
-            val scheduled = if (alarmScheduler.hasExactAlarmPermission()) {
-                alarmScheduler.schedule(finalTask)
-                true
-            } else {
-                false
-            }
-            scheduled
+            alarmScheduler.schedule(finalTask)
         }.onSuccess { scheduled ->
             _uiState.update {
                 it.copy(
@@ -118,7 +112,7 @@ class AiChatViewModel @Inject constructor(
                     feedback = if (scheduled) {
                         "Task created and reminder scheduled."
                     } else {
-                        "Task created, but reminder not scheduled. Enable Exact Alarms in Settings."
+                        "Task created, but the reminder could not be scheduled. Enable Alarms & reminders in Android Settings."
                     },
                     draft = null,
                     message = "",
