@@ -43,7 +43,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SettingsState(
-    val darkTheme: Boolean = true,
     val vibrateDefault: Boolean = true,
     val showOverlayDefault: Boolean = true,
     val autoRescheduleMissed: Boolean = false,
@@ -66,11 +65,6 @@ class SettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            appDataStore.darkThemeFlow.collect { value ->
-                _state.update { it.copy(darkTheme = value) }
-            }
-        }
-        viewModelScope.launch {
             appDataStore.defaultVibrateFlow.collect { value ->
                 _state.update { it.copy(vibrateDefault = value) }
             }
@@ -87,9 +81,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setDarkTheme(v: Boolean) = viewModelScope.launch {
-        appDataStore.setDarkTheme(v)
-    }
     fun setVibrateDefault(v: Boolean) = viewModelScope.launch {
         appDataStore.setDefaultVibrate(v)
     }
@@ -145,12 +136,12 @@ fun SettingsScreen(
             modifier = Modifier.padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            SettingsSection("Permission Center") {
-                PermissionStatusRow("Exact alarms", exactAlarmGranted)
+            SettingsSection("Reminder Reliability") {
+                PermissionStatusRow("On-time alarms", exactAlarmGranted)
                 HorizontalDivider(color = BorderColor)
                 PermissionStatusRow("Notifications", notificationsGranted)
                 HorizontalDivider(color = BorderColor)
-                PermissionStatusRow("Overlay / draw over apps", overlayGranted)
+                PermissionStatusRow("Show over other apps", overlayGranted)
                 HorizontalDivider(color = BorderColor)
                 PermissionStatusRow("Full-screen alerts", fullScreenIntentGranted)
                 HorizontalDivider(color = BorderColor)
@@ -186,10 +177,6 @@ fun SettingsScreen(
                 ) {
                     Text("Refresh permission status", color = TextPrimary)
                 }
-            }
-
-            SettingsSection("Appearance") {
-                SettingsToggle("Dark Theme", state.darkTheme, viewModel::setDarkTheme)
             }
 
             SettingsSection("Reminders") {
